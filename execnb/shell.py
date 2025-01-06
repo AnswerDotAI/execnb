@@ -29,7 +29,6 @@ from html import escape
 try: from matplotlib_inline.backend_inline import set_matplotlib_formats
 except ImportError: set_matplotlib_formats = None
 
-
 from .nbio import *
 from .nbio import _dict2obj
 
@@ -161,11 +160,20 @@ async def run_async(self:CaptureShell,
 def _pre(s, xtra=''): return f"<pre {xtra}><code>{escape(s)}</code></pre>"
 def _strip(s): return strip_ansi(escape(s))
 
-def render_outputs(outputs, ansi_renderer=_strip, include_imgs=True, pygments=False):
+def render_outputs(outputs,
+        ansi_renderer=_strip,
+        include_imgs=True,
+        pygments=False,
+        markdown_func=None, # If None, defaults to mistletoe.markdown
+        pygments_renderer=None, # If None, defaults to mistletoe.contrib.pygments.PygmentsRenderer    
+        html_renderer=None # If None, defaults to mistletoe.HTMLRenderer
+    ):
     try:
-        from mistletoe import markdown, HTMLRenderer
-        from mistletoe.contrib.pygments_renderer import PygmentsRenderer
-    except ImportError: return print('mistletoe not found -- please install it')
+        if markdown_func is None: from mistletoe import markdown
+        if pygments_renderer is None: from mistletoe import HTMLRenderer
+        if html_renderer is None: from mistletoe.contrib.pygments import PygmentsRenderer    
+    except ImportError:
+        return 'No renderers supplied for execnb.shell.render_output. Quickfix is to install mistletoe'
     renderer = PygmentsRenderer if pygments else HTMLRenderer
     def render_output(out):
         otype = out['output_type']
@@ -179,7 +187,7 @@ def render_outputs(outputs, ansi_renderer=_strip, include_imgs=True, pygments=Fa
             _g = lambda t: ''.join(data[t]) if t in data else None
             if d := _g('text/html'): return d
             if d := _g('application/javascript'): return f'<script>{d}</script>'
-            if d := _g('text/markdown'): return markdown(d, renderer=renderer)
+            if d := _g('text/markdown'): return markdown_func(d, renderer=renderer)
             if d := _g('text/latex'): return f'<div class="math">${d}$</div>'
             if include_imgs:
                 if d := _g('image/jpeg'): return f'<img src="data:image/jpeg;base64,{d}"/>'
