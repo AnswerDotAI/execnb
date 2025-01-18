@@ -188,7 +188,7 @@ def render_outputs(outputs, ansi_renderer=_strip, include_imgs=True, pygments=Fa
             if d := _g('image/svg+xml'): return d
             
         return ''
-    
+
     return '\n'.join(map(render_output, outputs))
 
 # %% ../nbs/02_shell.ipynb
