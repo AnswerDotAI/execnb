@@ -165,7 +165,7 @@ def render_outputs(outputs, ansi_renderer=_strip, include_imgs=True, pygments=Fa
     try:
         from mistletoe import markdown, HTMLRenderer
         from mistletoe.contrib.pygments_renderer import PygmentsRenderer
-    except ImportError: return print('mistletoe not found -- please install it')
+    except ImportError: return print('mistletoe not found -- please install it for execnb.shell.render_output')
     renderer = PygmentsRenderer if pygments else HTMLRenderer
     def render_output(out):
         otype = out['output_type']
