@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from fastcore.utils import *
 from fastcore.script import call_parse
-from fastcore.ansi import ansi2html
+from fastcore.ansi import ansi2html, strip_ansi
 
 import multiprocessing,types,traceback,signal
 try:
@@ -17,7 +17,6 @@ except RuntimeError: pass # if re-running cell
 from IPython.core.interactiveshell import InteractiveShell, ExecutionInfo, ExecutionResult
 from IPython.core.displayhook import DisplayHook
 from IPython.utils.capture import capture_output
-from IPython.utils.text import strip_ansi
 from IPython.core.completer import IPCompleter,provisionalcompleter,Completer
 from IPython.core.hooks import CommandChainDispatcher
 from IPython.core.completerlib import module_completer
