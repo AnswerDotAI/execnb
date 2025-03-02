@@ -32,6 +32,7 @@ except ImportError: set_matplotlib_formats = None
 from .nbio import *
 from .nbio import _dict2obj
 
+
 # %% auto 0
 __all__ = ['CaptureShell', 'format_exc', 'render_outputs', 'find_output', 'out_exec', 'out_stream', 'out_error', 'exec_nb',
            'SmartCompleter']
@@ -274,7 +275,7 @@ def prettytb(self:CaptureShell,
     fname = fname if fname else self._fname
     _fence = '='*75
     cell_intro_str = f"While Executing Cell #{self._cell_idx}:" if self._cell_idx else "While Executing:"
-    cell_str = f"\n{cell_intro_str}\n{format_exc(self.exc)}"
+    cell_str = f"\n{cell_intro_str}\n{''.join(format_exc(self.exc))}"
     fname_str = f' in {fname}' if fname else ''
     return f"{type(self.exc).__name__}{fname_str}:\n{_fence}\n{cell_str}\n"
 
