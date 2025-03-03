@@ -32,6 +32,7 @@ except ImportError: set_matplotlib_formats = None
 from .nbio import *
 from .nbio import _dict2obj
 
+
 # %% auto 0
 __all__ = ['CaptureShell', 'format_exc', 'render_outputs', 'find_output', 'out_exec', 'out_stream', 'out_error', 'exec_nb',
            'SmartCompleter']
@@ -160,12 +161,13 @@ async def run_async(self:CaptureShell,
 def _pre(s, xtra=''): return f"<pre {xtra}><code>{escape(s)}</code></pre>"
 def _strip(s): return strip_ansi(escape(s))
 
-def render_outputs(outputs, ansi_renderer=_strip, include_imgs=True, pygments=False):
+def render_outputs(outputs, ansi_renderer=_strip, include_imgs=True, pygments=False, md_tfm=noop, html_tfm=noop):
     try:
         from mistletoe import markdown, HTMLRenderer
         from mistletoe.contrib.pygments_renderer import PygmentsRenderer
     except ImportError: return print('mistletoe not found -- please install it')
     renderer = PygmentsRenderer if pygments else HTMLRenderer
+    
     def render_output(out):
         otype = out['output_type']
         if otype == 'stream':
@@ -176,9 +178,9 @@ def render_outputs(outputs, ansi_renderer=_strip, include_imgs=True, pygments=Fa
         elif otype in ('display_data','execute_result'):
             data = out['data']
             _g = lambda t: ''.join(data[t]) if t in data else None
-            if d := _g('text/html'): return d
+            if d := _g('text/html'): return html_tfm(d)
             if d := _g('application/javascript'): return f'<script>{d}</script>'
-            if d := _g('text/markdown'): return markdown(d, renderer=renderer)
+            if d := _g('text/markdown'): return md_tfm(markdown(d, renderer=renderer))
             if d := _g('text/latex'): return f'<div class="math">${d}$</div>'
             if include_imgs:
                 if d := _g('image/jpeg'): return f'<img src="data:image/jpeg;base64,{d}"/>'
@@ -273,7 +275,7 @@ def prettytb(self:CaptureShell,
     fname = fname if fname else self._fname
     _fence = '='*75
     cell_intro_str = f"While Executing Cell #{self._cell_idx}:" if self._cell_idx else "While Executing:"
-    cell_str = f"\n{cell_intro_str}\n{format_exc(self.exc)}"
+    cell_str = f"\n{cell_intro_str}\n{''.join(format_exc(self.exc))}"
     fname_str = f' in {fname}' if fname else ''
     return f"{type(self.exc).__name__}{fname_str}:\n{_fence}\n{cell_str}\n"
 
