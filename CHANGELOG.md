@@ -2,6 +2,14 @@
 
 <!-- do not remove -->
 
+## 0.1.12
+
+### New Features
+
+- Allow render outputs to take in functions that can modify HTML prior to being returned ([#72](https://github.com/AnswerDotAI/execnb/pull/72)), thanks to [@Isaac-Flath](https://github.com/Isaac-Flath)
+- Use fastcore `strip_ansi` instead of ipython text ([#71](https://github.com/AnswerDotAI/execnb/pull/71)), thanks to [@erikgaas](https://github.com/erikgaas)
+
+
 ## 0.1.11
 
 ### New Features
