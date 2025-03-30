@@ -185,8 +185,8 @@ def render_outputs(outputs, ansi_renderer=_strip, include_imgs=True, pygments=Fa
             if include_imgs:
                 if d := _g('image/jpeg'): return f'<img src="data:image/jpeg;base64,{d}"/>'
                 if d := _g('image/png'): return f'<img src="data:image/png;base64,{d}"/>'
+                if d := _g('image/svg+xml'): return d
             if d := _g('text/plain'): return _pre(d)
-            if d := _g('image/svg+xml'): return d
             
         return ''
 
