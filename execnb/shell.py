@@ -34,8 +34,8 @@ from .nbio import _dict2obj
 
 
 # %% auto 0
-__all__ = ['CaptureShell', 'format_exc', 'render_outputs', 'find_output', 'out_exec', 'out_stream', 'out_error', 'exec_nb',
-           'SmartCompleter']
+__all__ = ['CaptureShell', 'format_exc', 'NbResult', 'render_outputs', 'find_output', 'out_exec', 'out_stream', 'out_error',
+           'exec_nb', 'SmartCompleter']
 
 # %% ../nbs/02_shell.ipynb
 class _CustDisplayHook(DisplayHook):
@@ -103,6 +103,9 @@ def format_exc(e):
     return traceback.format_exception(type(e), e, e.__traceback__)
 
 # %% ../nbs/02_shell.ipynb
+class NbResult(list): pass
+
+# %% ../nbs/02_shell.ipynb
 def _out_stream(text, name): return dict(name=name, output_type='stream', text=text.splitlines(True))
 def _out_exc(e):
     ename = type(e).__name__
@@ -122,13 +125,15 @@ def _mk_out(data, meta, output_type='display_data'):
     return dict(data=fd, metadata=meta, output_type=output_type)
 
 def _out_nb(o, fmt):
-    res = []
+    res = NbResult()
     if o.stdout: res.append(_out_stream(o.stdout, 'stdout'))
     if o.stderr: res.append(_out_stream(o.stderr, 'stderr'))
     if o.exception: res.append(_out_exc(o.exception))
     r = o.result.result
+    if hasattr(r, '__ft__'): r = r.__ft__()
+    res.result = r
     for x in o.display_objects: res.append(_mk_out(x.data, x.metadata))
-    if r is not None and not o.quiet:
+    if r is not None and not o.quiet and not isinstance_str(r, 'FT'):
         res.append(_mk_out(*fmt.format(r), 'execute_result'))
     if 'execution_count' not in o: o['execution_count']=None
     for p in res:

@@ -5,5 +5,5 @@ website:
   title: "execnb"
   site-url: "https://AnswerDotAI.github.io/execnb/"
   description: "A description of your project"
-  repo-branch: master
+  repo-branch: main
   repo-url: "https://github.com/AnswerDotAI/execnb/"
