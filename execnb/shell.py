@@ -129,12 +129,10 @@ def _out_nb(o, fmt):
     if o.stdout: res.append(_out_stream(o.stdout, 'stdout'))
     if o.stderr: res.append(_out_stream(o.stderr, 'stderr'))
     if o.exception: res.append(_out_exc(o.exception))
-    r = o.result.result
-    if hasattr(r, '__ft__'): r = r.__ft__()
-    res.result = r
+    res.result = o.result.result
     for x in o.display_objects: res.append(_mk_out(x.data, x.metadata))
-    if r is not None and not o.quiet and not isinstance_str(r, 'FT'):
-        res.append(_mk_out(*fmt.format(r), 'execute_result'))
+    if res.result is not None and not o.quiet:
+        res.append(_mk_out(*fmt.format(res.result), 'execute_result'))
     if 'execution_count' not in o: o['execution_count']=None
     for p in res:
         if p["output_type"]=="execute_result": p['execution_count'] = o['execution_count']
