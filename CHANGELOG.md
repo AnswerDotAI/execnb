@@ -2,11 +2,10 @@
 
 <!-- do not remove -->
 
-## 0.1.13
+## 0.1.14
 
 ### New Features
 
-- Do not add FT results to exec result, and store results in `result` attr ([#74](https://github.com/AnswerDotAI/execnb/issues/74))
 - Support for graphviz and other svg rendering in outputs ([#73](https://github.com/AnswerDotAI/execnb/pull/73)), thanks to [@curtis-allan](https://github.com/curtis-allan)
 
 
