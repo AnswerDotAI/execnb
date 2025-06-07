@@ -64,6 +64,7 @@ You can also execute notebooks from the command line with
 
     usage: exec_nb [-h] [--dest DEST] [--exc_stop] [--inject_code INJECT_CODE]
                    [--inject_path INJECT_PATH] [--inject_idx INJECT_IDX]
+                   [--verbose]
                    src
 
     Execute notebook from `src` and save with outputs to `dest`
@@ -78,3 +79,4 @@ You can also execute notebooks from the command line with
       --inject_code INJECT_CODE  Code to inject into a cell
       --inject_path INJECT_PATH  Path to file containing code to inject into a cell
       --inject_idx INJECT_IDX    Cell to replace with `inject_code` (default: 0)
+      --verbose                  Show stdout/stderr during execution (default: False)

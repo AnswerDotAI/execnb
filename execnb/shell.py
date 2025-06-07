@@ -67,10 +67,10 @@ class CaptureShell(InteractiveShell):
             self._run(f"set_matplotlib_formats('{mpl_format}')")
 
     def _run(self, raw_cell, store_history=False, silent=False, shell_futures=True, cell_id=None,
-                 stdout=True, stderr=True, display=True):
+                 stdout=True, stderr=True, display=True, verbose=False):
         # TODO what if there's a comment?
         semic = raw_cell.rstrip().endswith(';')
-        with capture_output(display=display, stdout=stdout, stderr=stderr) as c:
+        with capture_output(display=display, stdout=stdout and not verbose, stderr=stderr and not verbose) as c:
             result = super().run_cell(raw_cell, store_history, silent, shell_futures=shell_futures, cell_id=cell_id)
         return AttrDict(result=result, stdout='' if semic else c.stdout, stderr=c.stderr,
                         display_objects=c.outputs, exception=result.error_in_exec, quiet=semic)
@@ -86,14 +86,14 @@ class CaptureShell(InteractiveShell):
 # %% ../nbs/02_shell.ipynb
 @patch
 def run_cell(self:CaptureShell, raw_cell, store_history=False, silent=False, shell_futures=True, cell_id=None,
-             stdout=True, stderr=True, display=True, timeout=None):
+             stdout=True, stderr=True, display=True, timeout=None, verbose=False):
     if not timeout: timeout = self.timeout
     if timeout:
         def handler(*args): raise TimeoutError()
         signal.signal(signal.SIGALRM, handler)
         signal.alarm(timeout)
     try: return self._run(raw_cell, store_history, silent, shell_futures, cell_id=cell_id,
-                          stdout=stdout, stderr=stderr, display=display)
+                          stdout=stdout, stderr=stderr, display=display, verbose=verbose)
     finally:
         if timeout: signal.alarm(0)
 
@@ -144,9 +144,10 @@ def run(self:CaptureShell,
         code:str, # Python/IPython code to run
         stdout=True, # Capture stdout and save as output?
         stderr=True, # Capture stderr and save as output?
-       timeout:Optional[int]=None): # Shell command will time out after {timeout} seconds
+        timeout:Optional[int]=None, # Shell command will time out after {timeout} seconds
+        verbose:bool=False): # Show stdout/stderr during execution
     "Run `code`, returning a list of all outputs in Jupyter notebook format"
-    res = self.run_cell(code, stdout=stdout, stderr=stderr, timeout=timeout)
+    res = self.run_cell(code, stdout=stdout, stderr=stderr, timeout=timeout, verbose=verbose)
     self.result = res.result.result
     self.exc = res.exception
     return _out_nb(res, self.display_formatter)
@@ -157,8 +158,9 @@ async def run_async(self:CaptureShell,
         code: str,  # Python/IPython code to run
         stdout=True,  # Capture stdout and save as output?
         stderr=True,  # Capture stderr and save as output?
-        timeout:Optional[int]=None): # Shell command will time out after {timeout} seconds
-    return self.run(code, stdout=stdout, stderr=stderr, timeout=timeout)
+        timeout:Optional[int]=None, # Shell command will time out after {timeout} seconds
+        verbose:bool=False): # Show stdout/stderr during execution
+    return self.run(code, stdout=stdout, stderr=stderr, timeout=timeout, verbose=verbose)
 
 # %% ../nbs/02_shell.ipynb
 def _pre(s, xtra=''): return f"<pre {xtra}><code>{escape(s)}</code></pre>"
@@ -197,11 +199,11 @@ def render_outputs(outputs, ansi_renderer=_strip, include_imgs=True, pygments=Fa
 
 # %% ../nbs/02_shell.ipynb
 @patch
-def cell(self:CaptureShell, cell, stdout=True, stderr=True):
+def cell(self:CaptureShell, cell, stdout=True, stderr=True, verbose=False):
     "Run `cell`, skipping if not code, and store outputs back in cell"
     if cell.cell_type!='code': return
     self._cell_idx = cell.idx_ + 1
-    outs = self.run(cell.source)
+    outs = self.run(cell.source, verbose=verbose)
     if outs: cell.outputs = _dict2obj(outs)
 
 # %% ../nbs/02_shell.ipynb
@@ -239,13 +241,14 @@ def run_all(self:CaptureShell,
             preproc:callable=_false, # Called before each cell is executed
             postproc:callable=_false, # Called after each cell is executed
             inject_code:str|None=None, # Code to inject into a cell
-            inject_idx:int=0 # Cell to replace with `inject_code`
+            inject_idx:int=0, # Cell to replace with `inject_code`
+            verbose:bool=False # Show stdout/stderr during execution
            ):
     "Run all cells in `nb`, stopping at first exception if `exc_stop`"
     if inject_code is not None: nb.cells[inject_idx].source = inject_code
     for cell in nb.cells:
         if not preproc(cell):
-            self.cell(cell)
+            self.cell(cell, verbose=verbose)
             postproc(cell)
         if self.exc and exc_stop: raise self.exc from None
 
@@ -259,7 +262,8 @@ def execute(self:CaptureShell,
             postproc:callable=_false, # Called after each cell is executed
             inject_code:str|None=None, # Code to inject into a cell
             inject_path:str|Path|None=None, # Path to file containing code to inject into a cell
-            inject_idx:int=0 # Cell to replace with `inject_code`
+            inject_idx:int=0, # Cell to replace with `inject_code`
+            verbose:bool=False # Show stdout/stderr during execution
 ):
     "Execute notebook from `src` and save with outputs to `dest"
     nb = read_nb(src)
@@ -267,7 +271,7 @@ def execute(self:CaptureShell,
     self.set_path(Path(src).parent.resolve())
     if inject_path is not None: inject_code = Path(inject_path).read_text()
     self.run_all(nb, exc_stop=exc_stop, preproc=preproc, postproc=postproc,
-                 inject_code=inject_code, inject_idx=inject_idx)
+                 inject_code=inject_code, inject_idx=inject_idx, verbose=verbose)
     if dest: write_nb(nb, dest)
 
 # %% ../nbs/02_shell.ipynb
@@ -290,11 +294,12 @@ def exec_nb(
     exc_stop:bool=False, # Stop on exceptions?
     inject_code:str=None, # Code to inject into a cell
     inject_path:str=None, # Path to file containing code to inject into a cell
-    inject_idx:int=0 # Cell to replace with `inject_code`
+    inject_idx:int=0, # Cell to replace with `inject_code`
+    verbose:bool=False # Show stdout/stderr during execution
 ):
     "Execute notebook from `src` and save with outputs to `dest`"
     CaptureShell().execute(src, dest, exc_stop=exc_stop, inject_code=inject_code,
-                           inject_path=inject_path, inject_idx=inject_idx)
+                           inject_path=inject_path, inject_idx=inject_idx, verbose=verbose)
 
 # %% ../nbs/02_shell.ipynb
 class SmartCompleter(IPCompleter):
