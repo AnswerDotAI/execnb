@@ -4,7 +4,9 @@
 
 ## 0.1.15
 
+### New Features
 
+- Add --verbose flag to exec_nb for real-time output ([#75](https://github.com/AnswerDotAI/execnb/pull/75)), thanks to [@radekosmulski](https://github.com/radekosmulski)
 
 
 ## 0.1.14
