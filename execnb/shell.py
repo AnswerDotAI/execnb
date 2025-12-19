@@ -73,7 +73,8 @@ class CaptureShell(InteractiveShell):
         with capture_output(display=display, stdout=stdout and not verbose, stderr=stderr and not verbose) as c:
             result = super().run_cell(raw_cell, store_history, silent, shell_futures=shell_futures, cell_id=cell_id)
         return AttrDict(result=result, stdout='' if semic else c.stdout, stderr=c.stderr,
-                        display_objects=c.outputs, exception=result.error_in_exec, quiet=semic)
+                        display_objects=c.outputs, 
+                        exception=result.error_in_exec or result.error_before_exec, quiet=semic)
     
     def set_path(self, path):
         "Add `path` to python path, or `path.parent` if it's a file"
