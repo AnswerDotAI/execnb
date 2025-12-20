@@ -2,6 +2,13 @@
 
 <!-- do not remove -->
 
+## 0.1.16
+
+### Bugs Squashed
+
+- Catch errors before exec ([#77](https://github.com/AnswerDotAI/execnb/issues/77))
+
+
 ## 0.1.15
 
 ### New Features
