@@ -2,6 +2,13 @@
 
 <!-- do not remove -->
 
+## 0.1.17
+
+### New Features
+
+- Add cell id in nbio ([#79](https://github.com/AnswerDotAI/execnb/issues/79))
+
+
 ## 0.1.16
 
 ### Bugs Squashed
@@ -13,7 +20,7 @@
 
 ### New Features
 
-- Add --verbose flag to exec_nb for real-time output ([#75](https://github.com/AnswerDotAI/execnb/pull/75)), thanks to [@radekosmulski](https://github.com/radekosmulski)
+- Add --verbose flag to `exec_nb` for real-time output ([#75](https://github.com/AnswerDotAI/execnb/pull/75)), thanks to [@radekosmulski](https://github.com/radekosmulski)
 
 
 ## 0.1.14
