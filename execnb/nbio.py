@@ -20,10 +20,10 @@ def _read_json(self, encoding=None, errors=None):
 
 # %% ../nbs/01_nbio.ipynb
 class NbCell(AttrDict):
-    def __init__(self, idx, cell, id=None):
+    def __init__(self, idx, cell):
         super().__init__(cell)
         self.idx_ = idx
-        self.id = id or rtoken_hex(4)
+        if 'id' not in self: self.id = rtoken_hex(4)
         if 'source' in self: self.set_source(self.source)
 
     def set_source(self, source):
