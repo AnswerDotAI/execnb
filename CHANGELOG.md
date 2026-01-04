@@ -2,6 +2,13 @@
 
 <!-- do not remove -->
 
+## 0.1.18
+
+### Bugs Squashed
+
+- id not extracted from cell meta ([#80](https://github.com/AnswerDotAI/execnb/issues/80))
+
+
 ## 0.1.17
 
 ### New Features
