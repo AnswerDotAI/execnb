@@ -3,19 +3,16 @@ requires = ["setuptools>=64"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name="execnb"
+name = "execnb"
 dynamic = ["version"]
 description = "A description of your project"
 readme = "README.md"
-requires-python=">=3.7"
+requires-python = ">=3.7"
 license = {text = "Apache-2.0"}
 authors = [{name = "Jeremy Howard", email = "j@fast.ai"}]
 keywords = ['some', 'keywords']
-classifiers = [
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3 :: Only",
-]
-dependencies = ["fastcore>=1.10.4","ipython"]
+classifiers = ["Natural Language :: English", "Intended Audience :: Developers", "Development Status :: 2 - Pre-Alpha", "Programming Language :: Python :: 3", "Programming Language :: Python :: 3 :: Only"]
+dependencies = ['fastcore>=1.10.4', 'ipython']
 
 [project.urls]
 Repository = "https://github.com/AnswerDotAI/execnb/"
@@ -24,16 +21,18 @@ Documentation = "https://AnswerDotAI.github.io/execnb/"
 [project.entry-points.nbdev]
 execnb = "execnb._modidx:d"
 
+[project.optional-dependencies]
+dev = ['matplotlib', 'Pillow', 'mistletoe']
+
+
 [project.scripts]
 exec_nb = "execnb.shell:exec_nb"
+
 [tool.setuptools.dynamic]
 version = {attr = "execnb.__version__"}
 
 [tool.setuptools.packages.find]
 include = ["execnb"]
-
-[project.optional-dependencies]
-dev = ["matplotlib","Pillow","mistletoe"]
 
 [tool.nbdev]
 recursive = false
