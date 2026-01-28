@@ -24,8 +24,14 @@ Documentation = "https://AnswerDotAI.github.io/execnb/"
 [project.entry-points.nbdev]
 execnb = "execnb._modidx:d"
 
+[project.scripts]
+exec_nb=execnb.shell:exec_nb
+
 [tool.setuptools.dynamic]
 version = {attr = "execnb.__version__"}
+
+[project.scripts]
+exec_nb=execnb.shell:exec_nb
 
 [tool.setuptools.packages.find]
 include = ["execnb"]
