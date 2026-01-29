@@ -16,5 +16,5 @@ jobs:
       - name: Run nbdev tests
         run: |
           cd nbdev && pip install -Ue ".[dev]"
-          nbdev_test
+          nbdev-test
     
