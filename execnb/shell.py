@@ -31,8 +31,8 @@ try: from matplotlib_inline.backend_inline import set_matplotlib_formats
 except ImportError: set_matplotlib_formats = None
 
 
-from .nbio import *
-from .nbio import _dict2obj
+from fastcore.nbio import *
+from fastcore.nbio import _dict2obj
 
 
 # %% ../nbs/02_shell.ipynb #6913382c
