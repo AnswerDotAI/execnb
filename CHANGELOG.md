@@ -2,12 +2,11 @@
 
 <!-- do not remove -->
 
-## 0.1.19
+## 0.2.0
 
-### New Features
+### Breaking changes
 
 - Move nbio to fastcore ([#81](https://github.com/AnswerDotAI/execnb/issues/81))
-
 
 
 ## 0.1.18
