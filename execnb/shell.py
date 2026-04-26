@@ -27,9 +27,6 @@ from IPython.display import display as disp, HTML
 
 from base64 import b64encode
 from html import escape
-try: from matplotlib_inline.backend_inline import set_matplotlib_formats
-except ImportError: set_matplotlib_formats = None
-
 
 from fastcore.nbio import *
 from fastcore.nbio import _dict2obj
@@ -59,10 +56,13 @@ class CaptureShell(InteractiveShell):
         if path: self.set_path(path)
         self.display_formatter.active = True
         if not IN_NOTEBOOK: InteractiveShell._instance = self
-        if set_matplotlib_formats:
-            self.enable_matplotlib("inline")
-            self._run("from matplotlib_inline.backend_inline import set_matplotlib_formats")
-            self._run(f"set_matplotlib_formats('{mpl_format}')")
+        if mpl_format:
+            try: from matplotlib_inline.backend_inline import set_matplotlib_formats
+            except ImportError: set_matplotlib_formats = None
+            if set_matplotlib_formats:
+                self.enable_matplotlib("inline")
+                self._run("from matplotlib_inline.backend_inline import set_matplotlib_formats")
+                self._run(f"set_matplotlib_formats('{mpl_format}')")
 
     def _run(self, raw_cell, store_history=False, silent=False, shell_futures=True, cell_id=None,
                  stdout=True, stderr=True, display=True, verbose=False):
@@ -73,13 +73,13 @@ class CaptureShell(InteractiveShell):
         return AttrDict(result=result, stdout='' if semic else c.stdout, stderr=c.stderr,
                         display_objects=c.outputs, 
                         exception=result.error_in_exec or result.error_before_exec, quiet=semic)
-    
+
     def set_path(self, path):
         "Add `path` to python path, or `path.parent` if it's a file"
         path = Path(path)
         if path.is_file(): path = path.parent
         self._run(f"import sys; sys.path.insert(0, '{path.as_posix()}')")
-    
+
     def enable_gui(self, gui=None): pass
 
 # %% ../nbs/00_shell.ipynb #93adf867
