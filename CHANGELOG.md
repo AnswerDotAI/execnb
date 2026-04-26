@@ -2,12 +2,18 @@
 
 <!-- do not remove -->
 
+## 0.2.2
+
+### New Features
+
+- Add `mpl_format=None` param option that skips inline matplotlib setup ([#82](https://github.com/AnswerDotAI/execnb/issues/82))
+
+
 ## 0.2.1
 
 ### New Features
 
 - Move nbio to fastcore ([#81](https://github.com/AnswerDotAI/execnb/issues/81))
-
 
 
 ## 0.2.0
