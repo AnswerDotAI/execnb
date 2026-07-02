@@ -2,6 +2,13 @@
 
 <!-- do not remove -->
 
+## 0.2.3
+
+### New Features
+
+- Add `select_cells`, `nbopen`, and `nbrun` for running notebook cells by id prefix ([#83](https://github.com/AnswerDotAI/execnb/issues/83))
+
+
 ## 0.2.2
 
 ### New Features
