@@ -6,7 +6,7 @@ Docs: https://AnswerDotAI.github.io/execnbshell.html.md"""
 
 # %% auto #0
 __all__ = ['CaptureShell', 'format_exc', 'NbResult', 'render_outputs', 'find_output', 'out_exec', 'out_stream', 'out_error',
-           'exec_nb', 'SmartCompleter']
+           'select_cells', 'exec_nb', 'SmartCompleter']
 
 # %% ../nbs/00_shell.ipynb #535003cf
 from fastcore.utils import *
@@ -57,7 +57,7 @@ class CaptureShell(InteractiveShell):
         self.result,self.exc = None,None
         if path: self.set_path(path)
         self.display_formatter.active = True
-        if not IN_NOTEBOOK: InteractiveShell._instance = self
+        if not in_notebook(): InteractiveShell._instance = self
         if mpl_format:
             try: from matplotlib_inline.backend_inline import set_matplotlib_formats
             except ImportError: set_matplotlib_formats = None
@@ -236,15 +236,16 @@ def out_error(outp):
 def _false(o): return False
 
 @patch
-def run_all(self:CaptureShell,
-            nb, # A notebook read with `nbclient` or `read_nb`
-            exc_stop:bool=False, # Stop on exceptions?
-            preproc:callable=_false, # Called before each cell is executed
-            postproc:callable=_false, # Called after each cell is executed
-            inject_code:str|None=None, # Code to inject into a cell
-            inject_idx:int=0, # Cell to replace with `inject_code`
-            verbose:bool=False # Show stdout/stderr during execution
-           ):
+def run_all(
+    self:CaptureShell,
+    nb, # A notebook read with `nbclient` or `read_nb`
+    exc_stop:bool=False, # Stop on exceptions?
+    preproc:callable=_false, # Called before each cell is executed
+    postproc:callable=_false, # Called after each cell is executed
+    inject_code:str|None=None, # Code to inject into a cell
+    inject_idx:int=0, # Cell to replace with `inject_code`
+    verbose:bool=False # Show stdout/stderr during execution
+):
     "Run all cells in `nb`, stopping at first exception if `exc_stop`"
     if inject_code is not None: nb.cells[inject_idx].source = inject_code
     for cell in nb.cells:
@@ -286,6 +287,57 @@ def prettytb(self:CaptureShell,
     cell_str = f"\n{cell_intro_str}\n{''.join(format_exc(self.exc))}"
     fname_str = f' in {fname}' if fname else ''
     return f"{type(self.exc).__name__}{fname_str}:\n{_fence}\n{cell_str}\n"
+
+# %% ../nbs/00_shell.ipynb #de6bd9f6
+def _is_exported(src): return bool(re.search(r'^\s*#\|\s*exports?\b', src, flags=re.M))
+
+def select_cells(
+    nb, # A notebook read with `read_nb`
+    msgid:str=None, # Cell id prefix to match
+    above:bool=False, # Include the matched cell and all cells above it?
+    below:bool=False, # Include the matched cell and all cells below it?
+    all:bool=False, # Include all code cells (ignores `msgid`)?
+    exported:bool=False # Only cells with `#| export` or `#| exports`?
+):
+    "Select code cells from `nb` by cell id prefix"
+    cells = [o for o in nb.cells if o.cell_type=='code']
+    if not all:
+        if not msgid: raise ValueError('`msgid` required unless `all=True`')
+        idx = first(i for i,o in enumerate(cells) if str(o.id).startswith(msgid))
+        if idx is None: raise ValueError(f'No code cell id starting with {msgid!r}')
+        if above: cells = cells[:idx+1]
+        elif below: cells = cells[idx:]
+        else: cells = [cells[idx]]
+    if exported: cells = [o for o in cells if _is_exported(o.source)]
+    return cells
+
+# %% ../nbs/00_shell.ipynb #9c16e245
+from fastcore.nbio import render_text
+
+# %% ../nbs/00_shell.ipynb #ec223d10
+@patch
+def nbopen(self:CaptureShell, fname:str|Path):
+    "Set the default notebook for `nbrun`"
+    self._nbrun_fname = Path(fname)
+
+@patch
+def nbrun(
+    self:CaptureShell,
+    msgid:str=None, # Cell id prefix to run
+    fname:str|Path=None, # Notebook path (defaults to last `nbopen`)
+    above:bool=False, # Also run all cells above the match?
+    below:bool=False, # Also run all cells below the match?
+    all:bool=False, # Run all code cells?
+    exported:bool=False # Only cells with `#| export` or `#| exports`?
+):
+    "Run cell(s) from a notebook by id prefix, printing rendered outputs"
+    fname = ifnone(fname, getattr(self,'_nbrun_fname',None))
+    if not fname: raise ValueError('No `fname` passed and no notebook opened with `nbopen`')
+    self.nbopen(fname)
+    nb = read_nb(fname)
+    for cell in select_cells(nb, msgid, above=above, below=below, all=all, exported=exported):
+        res = render_text(self.run(cell.source))
+        if res: print(f'--- {cell.id} ---\n{res}')
 
 # %% ../nbs/00_shell.ipynb #1227c8b1
 @call_parse
