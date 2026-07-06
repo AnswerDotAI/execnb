@@ -11,7 +11,7 @@ __all__ = ['CaptureShell', 'format_exc', 'NbResult', 'render_outputs', 'find_out
 # %% ../nbs/00_shell.ipynb #535003cf
 from fastcore.utils import *
 from fastcore.script import call_parse
-from fastcore.ansi import ansi2html, strip_ansi
+from fastcore.ansi import strip_ansi
 
 import multiprocessing,types,traceback,signal
 try:
@@ -21,11 +21,10 @@ except RuntimeError: pass # if re-running cell
 from IPython.core.interactiveshell import InteractiveShell, ExecutionInfo, ExecutionResult
 from IPython.core.displayhook import DisplayHook
 from IPython.utils.capture import capture_output
-from IPython.core.completer import IPCompleter,provisionalcompleter,Completer
+from IPython.core.completer import IPCompleter,provisionalcompleter
 from IPython.core.hooks import CommandChainDispatcher
 from IPython.core.completerlib import module_completer
 from IPython.utils.strdispatch import StrDispatch
-from IPython.display import display as disp, HTML
 
 from base64 import b64encode
 from html import escape
@@ -67,14 +66,13 @@ class CaptureShell(InteractiveShell):
                 self._run(f"set_matplotlib_formats('{mpl_format}')")
 
     def _run(self, raw_cell, store_history=False, silent=False, shell_futures=True, cell_id=None,
-                 stdout=True, stderr=True, display=True, verbose=False):
+        stdout=True, stderr=True, display=True, verbose=False):
         # TODO what if there's a comment?
         semic = raw_cell.rstrip().endswith(';')
         with capture_output(display=display, stdout=stdout and not verbose, stderr=stderr and not verbose) as c:
             result = super().run_cell(raw_cell, store_history, silent, shell_futures=shell_futures, cell_id=cell_id)
-        return AttrDict(result=result, stdout='' if semic else c.stdout, stderr=c.stderr,
-                        display_objects=c.outputs, 
-                        exception=result.error_in_exec or result.error_before_exec, quiet=semic)
+        return AttrDict(result=result, stdout='' if semic else c.stdout, stderr=c.stderr, display_objects=c.outputs,
+            exception=result.error_in_exec or result.error_before_exec, quiet=semic)
 
     def set_path(self, path):
         "Add `path` to python path, or `path.parent` if it's a file"
@@ -87,14 +85,14 @@ class CaptureShell(InteractiveShell):
 # %% ../nbs/00_shell.ipynb #93adf867
 @patch
 def run_cell(self:CaptureShell, raw_cell, store_history=False, silent=False, shell_futures=True, cell_id=None,
-             stdout=True, stderr=True, display=True, timeout=None, verbose=False):
+    stdout=True, stderr=True, display=True, timeout=None, verbose=False):
     if not timeout: timeout = self.timeout
     if timeout:
         def handler(*args): raise TimeoutError()
         signal.signal(signal.SIGALRM, handler)
         signal.alarm(timeout)
     try: return self._run(raw_cell, store_history, silent, shell_futures, cell_id=cell_id,
-                          stdout=stdout, stderr=stderr, display=display, verbose=verbose)
+        stdout=stdout, stderr=stderr, display=display, verbose=verbose)
     finally:
         if timeout: signal.alarm(0)
 
@@ -132,8 +130,7 @@ def _out_nb(o, fmt):
     if o.exception: res.append(_out_exc(o.exception))
     res.result = o.result.result
     for x in o.display_objects: res.append(_mk_out(x.data, x.metadata))
-    if res.result is not None and not o.quiet:
-        res.append(_mk_out(*fmt.format(res.result), 'execute_result'))
+    if res.result is not None and not o.quiet: res.append(_mk_out(*fmt.format(res.result), 'execute_result'))
     if 'execution_count' not in o: o['execution_count']=None
     for p in res:
         if p["output_type"]=="execute_result": p['execution_count'] = o['execution_count']
@@ -142,11 +139,11 @@ def _out_nb(o, fmt):
 # %% ../nbs/00_shell.ipynb #242f732f
 @patch
 def run(self:CaptureShell,
-        code:str, # Python/IPython code to run
-        stdout=True, # Capture stdout and save as output?
-        stderr=True, # Capture stderr and save as output?
-        timeout:Optional[int]=None, # Shell command will time out after {timeout} seconds
-        verbose:bool=False): # Show stdout/stderr during execution
+    code:str, # Python/IPython code to run
+    stdout=True, # Capture stdout and save as output?
+    stderr=True, # Capture stderr and save as output?
+    timeout:Optional[int]=None, # Shell command will time out after {timeout} seconds
+    verbose:bool=False): # Show stdout/stderr during execution
     "Run `code`, returning a list of all outputs in Jupyter notebook format"
     res = self.run_cell(code, stdout=stdout, stderr=stderr, timeout=timeout, verbose=verbose)
     self.result = res.result.result
@@ -156,11 +153,11 @@ def run(self:CaptureShell,
 # %% ../nbs/00_shell.ipynb #eaa11df9
 @patch
 async def run_async(self:CaptureShell,
-        code: str,  # Python/IPython code to run
-        stdout=True,  # Capture stdout and save as output?
-        stderr=True,  # Capture stderr and save as output?
-        timeout:Optional[int]=None, # Shell command will time out after {timeout} seconds
-        verbose:bool=False): # Show stdout/stderr during execution
+    code: str,  # Python/IPython code to run
+    stdout=True,  # Capture stdout and save as output?
+    stderr=True,  # Capture stderr and save as output?
+    timeout:Optional[int]=None, # Shell command will time out after {timeout} seconds
+    verbose:bool=False): # Show stdout/stderr during execution
     return self.run(code, stdout=stdout, stderr=stderr, timeout=timeout, verbose=verbose)
 
 # %% ../nbs/00_shell.ipynb #f698a432
@@ -209,7 +206,7 @@ def cell(self:CaptureShell, cell, stdout=True, stderr=True, verbose=False):
 
 # %% ../nbs/00_shell.ipynb #008c0cef
 def find_output(outp, # Output from `run`
-                ot='execute_result' # Output_type to find
+    ot='execute_result' # Output_type to find
                ):
     "Find first output of type `ot` in `CaptureShell.run` output"
     return first(o for o in outp if o['output_type']==ot)
@@ -257,15 +254,15 @@ def run_all(
 # %% ../nbs/00_shell.ipynb #70808010
 @patch
 def execute(self:CaptureShell,
-            src:str|Path, # Notebook path to read from
-            dest:str|None=None, # Notebook path to write to
-            exc_stop:bool=False, # Stop on exceptions?
-            preproc:callable=_false, # Called before each cell is executed
-            postproc:callable=_false, # Called after each cell is executed
-            inject_code:str|None=None, # Code to inject into a cell
-            inject_path:str|Path|None=None, # Path to file containing code to inject into a cell
-            inject_idx:int=0, # Cell to replace with `inject_code`
-            verbose:bool=False # Show stdout/stderr during execution
+    src:str|Path, # Notebook path to read from
+    dest:str|None=None, # Notebook path to write to
+    exc_stop:bool=False, # Stop on exceptions?
+    preproc:callable=_false, # Called before each cell is executed
+    postproc:callable=_false, # Called after each cell is executed
+    inject_code:str|None=None, # Code to inject into a cell
+    inject_path:str|Path|None=None, # Path to file containing code to inject into a cell
+    inject_idx:int=0, # Cell to replace with `inject_code`
+    verbose:bool=False # Show stdout/stderr during execution
 ):
     "Execute notebook from `src` and save with outputs to `dest"
     nb = read_nb(src)
@@ -273,13 +270,13 @@ def execute(self:CaptureShell,
     self.set_path(Path(src).parent.resolve())
     if inject_path is not None: inject_code = Path(inject_path).read_text()
     self.run_all(nb, exc_stop=exc_stop, preproc=preproc, postproc=postproc,
-                 inject_code=inject_code, inject_idx=inject_idx, verbose=verbose)
+        inject_code=inject_code, inject_idx=inject_idx, verbose=verbose)
     if dest: write_nb(nb, dest)
 
 # %% ../nbs/00_shell.ipynb #694161cb
 @patch
 def prettytb(self:CaptureShell, 
-             fname:str|Path=None): # filename to print alongside the traceback
+    fname:str|Path=None): # filename to print alongside the traceback
     "Show a pretty traceback for notebooks, optionally printing `fname`."
     fname = fname if fname else self._fname
     _fence = '='*75
@@ -290,6 +287,8 @@ def prettytb(self:CaptureShell,
 
 # %% ../nbs/00_shell.ipynb #de6bd9f6
 def _is_exported(src): return bool(re.search(r'^\s*#\|\s*exports?\b', src, flags=re.M))
+def _is_noeval(src):
+    return 'nbdev_export'+'(' in src or bool(re.search(r'^\s*#\|\s*eval:\s*false\s*$', src, flags=re.M|re.I))
 
 def select_cells(
     nb, # A notebook read with `read_nb`
@@ -297,7 +296,8 @@ def select_cells(
     above:bool=False, # Include the matched cell and all cells above it?
     below:bool=False, # Include the matched cell and all cells below it?
     all:bool=False, # Include all code cells (ignores `msgid`)?
-    exported:bool=False # Only cells with `#| export` or `#| exports`?
+    exported:bool=False, # Only cells with `#| export` or `#| exports`?
+    skip_noeval:bool=False # Skip `#| eval: false` and `nbdev_export` cells (like `nbdev-test`)?
 ):
     "Select code cells from `nb` by cell id prefix"
     cells = [o for o in nb.cells if o.cell_type=='code']
@@ -309,6 +309,7 @@ def select_cells(
         elif below: cells = cells[idx:]
         else: cells = [cells[idx]]
     if exported: cells = [o for o in cells if _is_exported(o.source)]
+    if skip_noeval: cells = [o for o in cells if not _is_noeval(o.source)]
     return cells
 
 # %% ../nbs/00_shell.ipynb #9c16e245
@@ -328,14 +329,15 @@ def nbrun(
     above:bool=False, # Also run all cells above the match?
     below:bool=False, # Also run all cells below the match?
     all:bool=False, # Run all code cells?
-    exported:bool=False # Only cells with `#| export` or `#| exports`?
+    exported:bool=False, # Only cells with `#| export` or `#| exports`?
+    skip_noeval:bool=False # Skip `#| eval: false` and `nbdev_export` cells (like `nbdev-test`)?
 ):
     "Run cell(s) from a notebook by id prefix, printing rendered outputs"
     fname = ifnone(fname, getattr(self,'_nbrun_fname',None))
     if not fname: raise ValueError('No `fname` passed and no notebook opened with `nbopen`')
     self.nbopen(fname)
     nb = read_nb(fname)
-    for cell in select_cells(nb, msgid, above=above, below=below, all=all, exported=exported):
+    for cell in select_cells(nb, msgid, above=above, below=below, all=all, exported=exported, skip_noeval=skip_noeval):
         res = render_text(self.run(cell.source))
         if res: print(f'--- {cell.id} ---\n{res}')
 
@@ -352,7 +354,7 @@ def exec_nb(
 ):
     "Execute notebook from `src` and save with outputs to `dest`"
     CaptureShell().execute(src, dest, exc_stop=exc_stop, inject_code=inject_code,
-                           inject_path=inject_path, inject_idx=inject_idx, verbose=verbose)
+        inject_path=inject_path, inject_idx=inject_idx, verbose=verbose)
 
 # %% ../nbs/00_shell.ipynb #c44963a0
 class SmartCompleter(IPCompleter):
@@ -369,8 +371,7 @@ class SmartCompleter(IPCompleter):
 
     def __call__(self, c):
         if not c: return []
-        with provisionalcompleter():
-            res = [o.text.rpartition('.')[-1] for o in self.completions(c, len(c)) if o.type!='magic']
+        with provisionalcompleter(): res = [o.text.rpartition('.')[-1] for o in self.completions(c, len(c)) if o.type!='magic']
         if res and res[0][-1]=='=': res = [o for o in res if o[-1]=='=']
         return res
 
