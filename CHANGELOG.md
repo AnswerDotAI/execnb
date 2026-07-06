@@ -2,6 +2,13 @@
 
 <!-- do not remove -->
 
+## 0.2.4
+
+### New Features
+
+- Add `skip_noeval` to skip `#| eval: false` and `nbdev_export()` cells ([#84](https://github.com/AnswerDotAI/execnb/issues/84))
+
+
 ## 0.2.3
 
 ### New Features
