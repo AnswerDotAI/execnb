@@ -328,19 +328,21 @@ def _is_noeval(src):
 
 def select_cells(
     nb, # A notebook read with `read_nb`
-    msgid:str=None, # Cell id prefix to match
+    msgid:str=None, # Cell id, or unique prefix, to match
     above:bool=False, # Include the matched cell and all cells above it?
     below:bool=False, # Include the matched cell and all cells below it?
     all:bool=False, # Include all code cells (ignores `msgid`)?
     exported:bool=False, # Only cells with `#| export` or `#| exports`?
     skip_noeval:bool=False # Skip `#| eval: false` and `nbdev_export` cells (like `nbdev-test`)?
 ):
-    "Select code cells from `nb` by cell id prefix"
+    "Select code cells from `nb` by cell id or unique prefix"
     cells = [o for o in nb.cells if o.cell_type=='code']
     if not all:
         if not msgid: raise ValueError('`msgid` required unless `all=True`')
-        idx = first(i for i,o in enumerate(cells) if str(o.id).startswith(msgid))
-        if idx is None: raise ValueError(f'No code cell id starting with {msgid!r}')
+        idxs = [i for i,o in enumerate(cells) if str(o.id).startswith(msgid)]
+        if not idxs: raise ValueError(f'No code cell id starting with {msgid!r}')
+        if len(idxs)>1: raise ValueError(f'Multiple code cell ids start with {msgid!r}: {", ".join(str(cells[i].id) for i in idxs)}')
+        idx = idxs[0]
         if above: cells = cells[:idx+1]
         elif below: cells = cells[idx:]
         else: cells = [cells[idx]]
@@ -355,12 +357,14 @@ from fastcore.nbio import render_text
 @patch
 def nbopen(self:CaptureShell, fname:str|Path):
     "Set the default notebook for `nbrun`"
-    self._nbrun_fname = Path(fname)
+    fname = Path(fname)
+    if not fname.exists(): raise FileNotFoundError(fname)
+    self._nbrun_fname = fname
 
 @patch
 def nbrun(
     self:CaptureShell,
-    msgid:str=None, # Cell id prefix to run
+    *msgids:str, # Cell id prefixes to run, in the order given
     fname:str|Path=None, # Notebook path (defaults to last `nbopen`)
     above:bool=False, # Also run all cells above the match?
     below:bool=False, # Also run all cells below the match?
@@ -373,9 +377,11 @@ def nbrun(
     if not fname: raise ValueError('No `fname` passed and no notebook opened with `nbopen`')
     self.nbopen(fname)
     nb = read_nb(fname)
-    for cell in select_cells(nb, msgid, above=above, below=below, all=all, exported=exported, skip_noeval=skip_noeval):
-        res = render_text(self.run(cell.source))
-        if res: print(f'--- {cell.id} ---\n{res}')
+    if all or not msgids: msgids = (None,)
+    for msgid in msgids:
+        for cell in select_cells(nb, msgid, above=above, below=below, all=all, exported=exported, skip_noeval=skip_noeval):
+            res = render_text(self.run(cell.source))
+            if res: print(f'--- {cell.id} ---\n{res}')
 
 # %% ../nbs/00_shell.ipynb #1227c8b1
 @call_parse
