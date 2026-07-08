@@ -18,6 +18,9 @@ try:
     if sys.platform == 'darwin': multiprocessing.set_start_method("fork")
 except RuntimeError: pass # if re-running cell
 
+from traitlets.config import Config
+from traitlets.config.loader import PyFileConfigLoader
+from IPython.paths import get_ipython_dir
 from IPython.core.interactiveshell import InteractiveShell, ExecutionInfo, ExecutionResult
 from IPython.core.displayhook import DisplayHook
 from IPython.utils.capture import capture_output
@@ -32,7 +35,6 @@ from html import escape
 from fastcore.nbio import *
 from fastcore.nbio import _dict2obj
 
-
 # %% ../nbs/00_shell.ipynb #6913382c
 class _CustDisplayHook(DisplayHook):
     def write_output_prompt(self): pass
@@ -45,12 +47,27 @@ def __repr__(self: ExecutionInfo): return f'cell: {self.raw_cell}; id: {self.cel
 @patch
 def __repr__(self: ExecutionResult): return f'result: {self.result}; err: {self.error_in_exec}; info: <{self.info}>'
 
+# %% ../nbs/00_shell.ipynb #9c879b74
+def _profile_cfg(name='default'):
+    "Merged config, extensions, and profile dir for IPython profile `name`"
+    pd = Path(get_ipython_dir())/f'profile_{name}'
+    cfg,exts = Config(),[]
+    for f in ('ipython_config.py','ipython_kernel_config.py'):
+        if not (pd/f).exists(): continue
+        c = PyFileConfigLoader(f, path=str(pd)).load_config()
+        e = c.get('InteractiveShellApp', {}).get('extensions', [])
+        exts += e.get_value([]) if hasattr(e, 'get_value') else e
+        cfg.merge(c)
+    return cfg,exts,pd
+
 # %% ../nbs/00_shell.ipynb #e3fb2bee
 class CaptureShell(InteractiveShell):
     displayhook_class = _CustDisplayHook
 
-    def __init__(self, path:str|Path=None, mpl_format='retina', history=False, timeout:Optional[int]=None):
-        super().__init__()
+    def __init__(self, path:str|Path=None, mpl_format='retina', history=False, timeout:Optional[int]=None, profile:bool=False):
+        cfg = _profile_cfg()[0] if profile else Config()
+        if not history: cfg.HistoryManager.hist_file = ':memory:'
+        super().__init__(config=cfg)
         self.history_manager.enabled = history
         self.timeout = timeout
         self.result,self.exc,self._cell_idx,self._fname = None,None,None,None
@@ -64,6 +81,7 @@ class CaptureShell(InteractiveShell):
                 self.enable_matplotlib("inline")
                 self._run("from matplotlib_inline.backend_inline import set_matplotlib_formats")
                 self._run(f"set_matplotlib_formats('{mpl_format}')")
+        if profile: self.load_profile()
 
     def _run(self, raw_cell, store_history=False, silent=False, shell_futures=True, cell_id=None,
         stdout=True, stderr=True, display=True, verbose=False):
@@ -95,6 +113,24 @@ def run_cell(self:CaptureShell, raw_cell, store_history=False, silent=False, she
         stdout=stdout, stderr=stderr, display=display, verbose=verbose)
     finally:
         if timeout: signal.alarm(0)
+
+# %% ../nbs/00_shell.ipynb #a05e1b43
+@patch
+def load_profile(self:CaptureShell, name='default'):
+    "Load profile `name`'s extensions and run its startup files (output suppressed), as `ipykernel` does"
+    cfg,exts,pd = _profile_cfg(name)
+    warns = []
+    with capture_output():
+        for o in exts:
+            try: self.extension_manager.load_extension(o)
+            except Exception as e: warns.append(f"Failed loading extension {o}: {e}")
+        sd = pd/'startup'
+        for f in sorted([*sd.glob('*.py'), *sd.glob('*.ipy')]) if sd.is_dir() else []:
+            try:
+                if f.suffix=='.ipy': self.safe_execfile_ipy(f, raise_exceptions=True)
+                else: self.safe_execfile(f, self.user_ns, raise_exceptions=True)
+            except Exception as e: warns.append(f"Failed running startup file {f}: {e}")
+    for w in warns: warnings.warn(w)
 
 # %% ../nbs/00_shell.ipynb #a1eb7703
 def format_exc(e):
