@@ -2,6 +2,14 @@
 
 <!-- do not remove -->
 
+## 0.2.5
+
+### New Features
+
+- Add `profile` support to CaptureShell to load IPython profile config, extensions, and startup files ([#85](https://github.com/AnswerDotAI/execnb/issues/85))
+
+
+
 ## 0.2.4
 
 ### New Features
