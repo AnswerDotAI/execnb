@@ -2,6 +2,13 @@
 
 <!-- do not remove -->
 
+## 0.2.6
+
+### New Features
+
+- nbrun: accept multiple cell ids, validate unique prefix match, and raise on missing notebook path ([#86](https://github.com/AnswerDotAI/execnb/issues/86))
+
+
 ## 0.2.5
 
 ### New Features
