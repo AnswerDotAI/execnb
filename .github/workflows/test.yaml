@@ -5,11 +5,11 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: fastai/workflows/nbdev3-ci@master
+      - uses: AnswerDotAI/workflows/nbdev3-ci@master
         with:
           pre: 1
       - name: clone nbdev
-        uses: actions/checkout@v3
+        uses: actions/checkout@v7
         with:
           repository: 'fastai/nbdev'
           path: nbdev

@@ -12,7 +12,7 @@ license = {text = "Apache-2.0"}
 authors = [{name = "Jeremy Howard", email = "j@fast.ai"}]
 keywords = ['some', 'keywords']
 classifiers = ["Natural Language :: English", "Intended Audience :: Developers", "Development Status :: 2 - Pre-Alpha", "Programming Language :: Python :: 3", "Programming Language :: Python :: 3 :: Only"]
-dependencies = ['fastcore>=1.10.4', 'ipython']
+dependencies = ['fastcore>=1.12.27', 'ipython']
 
 [project.urls]
 Repository = "https://github.com/AnswerDotAI/execnb/"

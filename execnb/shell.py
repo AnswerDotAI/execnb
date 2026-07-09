@@ -174,12 +174,14 @@ def _out_nb(o, fmt):
 
 # %% ../nbs/00_shell.ipynb #242f732f
 @patch
-def run(self:CaptureShell,
+def run(
+    self:CaptureShell,
     code:str, # Python/IPython code to run
     stdout=True, # Capture stdout and save as output?
     stderr=True, # Capture stderr and save as output?
     timeout:Optional[int]=None, # Shell command will time out after {timeout} seconds
-    verbose:bool=False): # Show stdout/stderr during execution
+    verbose:bool=False # Show stdout/stderr during execution
+):
     "Run `code`, returning a list of all outputs in Jupyter notebook format"
     res = self.run_cell(code, stdout=stdout, stderr=stderr, timeout=timeout, verbose=verbose)
     self.result = res.result.result
@@ -188,12 +190,14 @@ def run(self:CaptureShell,
 
 # %% ../nbs/00_shell.ipynb #eaa11df9
 @patch
-async def run_async(self:CaptureShell,
+async def run_async(
+    self:CaptureShell,
     code: str,  # Python/IPython code to run
     stdout=True,  # Capture stdout and save as output?
     stderr=True,  # Capture stderr and save as output?
     timeout:Optional[int]=None, # Shell command will time out after {timeout} seconds
-    verbose:bool=False): # Show stdout/stderr during execution
+    verbose:bool=False # Show stdout/stderr during execution
+):
     return self.run(code, stdout=stdout, stderr=stderr, timeout=timeout, verbose=verbose)
 
 # %% ../nbs/00_shell.ipynb #f698a432
@@ -241,9 +245,10 @@ def cell(self:CaptureShell, cell, stdout=True, stderr=True, verbose=False):
     if outs: cell.outputs = _dict2obj(outs)
 
 # %% ../nbs/00_shell.ipynb #008c0cef
-def find_output(outp, # Output from `run`
+def find_output(
+    outp, # Output from `run`
     ot='execute_result' # Output_type to find
-               ):
+):
     "Find first output of type `ot` in `CaptureShell.run` output"
     return first(o for o in outp if o['output_type']==ot)
 
@@ -289,7 +294,8 @@ def run_all(
 
 # %% ../nbs/00_shell.ipynb #70808010
 @patch
-def execute(self:CaptureShell,
+def execute(
+    self:CaptureShell,
     src:str|Path, # Notebook path to read from
     dest:str|None=None, # Notebook path to write to
     exc_stop:bool=False, # Stop on exceptions?
