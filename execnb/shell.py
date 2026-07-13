@@ -87,7 +87,7 @@ class CaptureShell(InteractiveShell):
         stdout=True, stderr=True, display=True, timeout=None, verbose=False):
         "Captured execution: run `raw_cell` with output capture and optional timeout, returning an `AttrDict`"
         # TODO what if there's a comment?
-        semic = raw_cell.rstrip().endswith(';')
+        semic = raw_cell.rstrip().endswith(';') and not raw_cell.lstrip().startswith('%%')
         if not timeout: timeout = self.timeout
         if timeout:
             def handler(*args): raise TimeoutError()
