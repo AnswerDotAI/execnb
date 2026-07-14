@@ -2,6 +2,17 @@
 
 <!-- do not remove -->
 
+## 0.2.7
+
+### New Features
+
+- Refactor shell execution to support nested `run_cell` calls and clear stale cell outputs ([#87](https://github.com/AnswerDotAI/execnb/issues/87))
+
+### Bugs Squashed
+
+- Fix quiet mode to not apply trailing-semicolon suppression to cell magics ([#88](https://github.com/AnswerDotAI/execnb/issues/88))
+
+
 ## 0.2.6
 
 ### New Features
