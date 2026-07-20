@@ -345,9 +345,9 @@ def prettytb(self:CaptureShell,
     return f"{type(self.exc).__name__}{fname_str}:\n{_fence}\n{cell_str}\n"
 
 # %% ../nbs/00_shell.ipynb #de6bd9f6
-def _is_exported(src): return bool(re.search(r'^\s*#\|\s*exports?\b', src, flags=re.M))
-def _is_noeval(src):
-    return 'nbdev_export'+'(' in src or bool(re.search(r'^\s*#\|\s*eval:\s*false\s*$', src, flags=re.M|re.I))
+def _is_exported(cell): return cell.has_directive('export') or cell.has_directive('exports')
+def _is_noeval(cell):
+    return 'nbdev_export'+'(' in cell.source or (cell.directive('eval') or '').lower()=='false'
 
 def select_cells(
     nb, # A notebook read with `read_nb`
@@ -369,8 +369,8 @@ def select_cells(
         if above: cells = cells[:idx+1]
         elif below: cells = cells[idx:]
         else: cells = [cells[idx]]
-    if exported: cells = [o for o in cells if _is_exported(o.source)]
-    if skip_noeval: cells = [o for o in cells if not _is_noeval(o.source)]
+    if exported: cells = [o for o in cells if _is_exported(o)]
+    if skip_noeval: cells = [o for o in cells if not _is_noeval(o)]
     return cells
 
 # %% ../nbs/00_shell.ipynb #9c16e245
