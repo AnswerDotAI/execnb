@@ -2,6 +2,14 @@
 
 <!-- do not remove -->
 
+## 0.2.8
+
+### New Features
+
+- Refactor `_is_exported`/`_is_noeval` to use cell directive API instead of regex on raw source ([#90](https://github.com/AnswerDotAI/execnb/issues/90))
+- Add input cleanup to strip leading comments before cell magics and improve the resulting error message ([#89](https://github.com/AnswerDotAI/execnb/issues/89))
+
+
 ## 0.2.7
 
 ### New Features
