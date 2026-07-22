@@ -2,6 +2,13 @@
 
 <!-- do not remove -->
 
+## 0.2.9
+
+### New Features
+
+- Add `stop_on_error` param to `nbrun` ([#91](https://github.com/AnswerDotAI/execnb/issues/91))
+
+
 ## 0.2.8
 
 ### New Features
@@ -262,4 +269,3 @@
 ## 0.0.1
 
 - Initial release
-
