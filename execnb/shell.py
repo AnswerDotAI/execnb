@@ -393,7 +393,8 @@ def nbrun(
     below:bool=False, # Also run all cells below the match?
     all:bool=False, # Run all code cells?
     exported:bool=False, # Only cells with `#| export` or `#| exports`?
-    skip_noeval:bool=False # Skip `#| eval: false` and `nbdev_export` cells (like `nbdev-test`)?
+    skip_noeval:bool=False, # Skip `#| eval: false` and `nbdev_export` cells (like `nbdev-test`)?
+    stop_on_error:bool=True, # Stop after the first cell whose run errors?
 ):
     "Run cell(s) from a notebook by id prefix, printing rendered outputs"
     fname = ifnone(fname, getattr(self,'_nbrun_fname',None))
@@ -403,8 +404,9 @@ def nbrun(
     if all or not msgids: msgids = (None,)
     for msgid in msgids:
         for cell in select_cells(nb, msgid, above=above, below=below, all=all, exported=exported, skip_noeval=skip_noeval):
-            res = render_text(self.run(cell.source))
-            if res: print(f'--- {cell.id} ---\n{res}')
+            outs = self.run(cell.source)
+            if res := render_text(outs): print(f'--- {cell.id} ---\n{res}')
+            if stop_on_error and any(o.get('output_type')=='error' for o in outs): return
 
 # %% ../nbs/00_shell.ipynb #1227c8b1
 @call_parse
