@@ -14,6 +14,7 @@ from fastcore.script import call_parse
 from fastcore.ansi import strip_ansi
 
 import multiprocessing,types,traceback,signal
+from contextlib import contextmanager
 try:
     if sys.platform == 'darwin': multiprocessing.set_start_method("fork")
 except RuntimeError: pass # if re-running cell
@@ -91,29 +92,6 @@ class CaptureShell(InteractiveShell):
                 self._run(f"set_matplotlib_formats('{mpl_format}')")
         if profile: self.load_profile()
 
-    def _run(self, raw_cell, store_history=False, silent=False, shell_futures=True, cell_id=None,
-        stdout=True, stderr=True, display=True, timeout=None, verbose=False):
-        "Captured execution: run `raw_cell` with output capture and optional timeout, returning an `AttrDict`"
-        # TODO what if there's a comment?
-        semic = raw_cell.rstrip().endswith(';') and not raw_cell.lstrip().startswith('%%')
-        if not timeout: timeout = self.timeout
-        if timeout:
-            def handler(*args): raise TimeoutError()
-            signal.signal(signal.SIGALRM, handler)
-            signal.alarm(timeout)
-        try:
-            with capture_output(display=display, stdout=stdout and not verbose, stderr=stderr and not verbose) as c:
-                old,self._nested = self._nested,True
-                try: result = super().run_cell(raw_cell, store_history, silent, shell_futures=shell_futures, cell_id=cell_id)
-                finally: self._nested = old
-        finally:
-            if timeout: signal.alarm(0)
-        e = result.error_in_exec or result.error_before_exec
-        if isinstance(e, UsageError) and str(e).startswith('Line magic function `%%'):
-            e.args = (f"{e} A cell magic (%%) must start the cell; remove or move the lines above it.",)
-        return AttrDict(result=result, stdout='' if semic else c.stdout, stderr=c.stderr, display_objects=c.outputs,
-            exception=e, quiet=semic)
-
     def set_path(self, path):
         "Add `path` to python path, or `path.parent` if it's a file"
         path = Path(path)
@@ -130,6 +108,78 @@ def run_cell(self:CaptureShell, raw_cell, store_history=False, silent=False, she
     return self._run(raw_cell, store_history, silent, shell_futures, cell_id=cell_id,
         stdout=stdout, stderr=stderr, display=display, timeout=timeout, verbose=verbose)
 
+
+# %% ../nbs/00_shell.ipynb #6f0cac34
+@patch
+@contextmanager
+def _captured(self:CaptureShell, stdout=True, stderr=True, display=True, timeout=None, verbose=False):
+    "Output capture and optional SIGALRM timeout around one cell run"
+    if not timeout: timeout = self.timeout
+    if timeout:
+        def handler(*args): raise TimeoutError()
+        signal.signal(signal.SIGALRM, handler)
+        signal.alarm(timeout)
+    try:
+        with capture_output(display=display, stdout=stdout and not verbose, stderr=stderr and not verbose) as c:
+            old,self._nested = self._nested,True
+            try: yield c
+            finally: self._nested = old
+    finally:
+        if timeout: signal.alarm(0)
+
+# %% ../nbs/00_shell.ipynb #cdb9dc37
+@patch
+def _run_res(self:CaptureShell, result, c, raw_cell):
+    "Package a cell `result` and its captured output `c` as the `AttrDict` rendering uses"
+    # TODO what if there's a comment?
+    semic = raw_cell.rstrip().endswith(';') and not raw_cell.lstrip().startswith('%%')
+    e = result.error_in_exec or result.error_before_exec
+    if isinstance(e, UsageError) and str(e).startswith('Line magic function `%%'):
+        e.args = (f"{e} A cell magic (%%) must start the cell; remove or move the lines above it.",)
+    return AttrDict(result=result, stdout='' if semic else c.stdout, stderr=c.stderr, display_objects=c.outputs,
+        exception=e, quiet=semic)
+
+# %% ../nbs/00_shell.ipynb #5bc0e776
+@patch
+def _run(self:CaptureShell, raw_cell, store_history=False, silent=False, shell_futures=True, cell_id=None,
+    stdout=True, stderr=True, display=True, timeout=None, verbose=False):
+    "Captured execution: run `raw_cell` with output capture and optional timeout, returning an `AttrDict`"
+    with self._captured(stdout, stderr, display, timeout, verbose) as c:
+        result = super(CaptureShell, self).run_cell(raw_cell, store_history, silent, shell_futures=shell_futures, cell_id=cell_id)
+    return self._run_res(result, c, raw_cell)
+
+# %% ../nbs/00_shell.ipynb #bfdb84a4
+@patch
+async def arun_cell(
+    self:CaptureShell,
+    raw_cell:str, # Python/IPython source for one cell
+    store_history:bool=False, # Store the cell in IPython's history?
+    silent:bool=False, # Suppress displayhook and `post_run_cell` event?
+    shell_futures:bool=True, # Share `__future__` imports with the shell?
+    cell_id=None, # Optional cell id, passed through to `run_cell_async`
+):
+    "Async `run_cell`: transform, await `run_cell_async` on the calling loop, and fire the post-execute events"
+    preprocessing_exc_tuple = None
+    try: transformed_cell = self.transform_cell(raw_cell)
+    except Exception:
+        transformed_cell = raw_cell
+        preprocessing_exc_tuple = sys.exc_info()
+    result = None
+    try: result = await self.run_cell_async(raw_cell, store_history, silent, shell_futures=shell_futures,
+        transformed_cell=transformed_cell, preprocessing_exc_tuple=preprocessing_exc_tuple, cell_id=cell_id)
+    finally:
+        self.events.trigger('post_execute')
+        if not silent: self.events.trigger('post_run_cell', result)
+    return result
+
+# %% ../nbs/00_shell.ipynb #1483d0f2
+@patch
+async def _run_async(self:CaptureShell, raw_cell, store_history=False, silent=False, shell_futures=True, cell_id=None,
+    stdout=True, stderr=True, display=True, timeout=None, verbose=False):
+    "Async `_run`: awaits the cell on the calling event loop, so `raw_cell` may use top-level `await`"
+    with self._captured(stdout, stderr, display, timeout, verbose) as c:
+        result = await self.arun_cell(raw_cell, store_history, silent, shell_futures=shell_futures, cell_id=cell_id)
+    return self._run_res(result, c, raw_cell)
 
 # %% ../nbs/00_shell.ipynb #a05e1b43
 @patch
@@ -209,13 +259,17 @@ def run(
 @patch
 async def run_async(
     self:CaptureShell,
-    code: str,  # Python/IPython code to run
-    stdout=True,  # Capture stdout and save as output?
-    stderr=True,  # Capture stderr and save as output?
+    code:str, # Python/IPython code to run
+    stdout=True, # Capture stdout and save as output?
+    stderr=True, # Capture stderr and save as output?
     timeout:Optional[int]=None, # Shell command will time out after {timeout} seconds
     verbose:bool=False # Show stdout/stderr during execution
 ):
-    return self.run(code, stdout=stdout, stderr=stderr, timeout=timeout, verbose=verbose)
+    "Async `run`: awaits the cell on the calling event loop, so `code` may use top-level `await`"
+    res = await self._run_async(code, stdout=stdout, stderr=stderr, timeout=timeout, verbose=verbose)
+    self.result = res.result.result
+    self.exc = res.exception
+    return _out_nb(res, self.display_formatter)
 
 # %% ../nbs/00_shell.ipynb #f698a432
 def _pre(s, xtra=''): return f"<pre {xtra}><code>{escape(s)}</code></pre>"
@@ -384,6 +438,18 @@ def nbopen(self:CaptureShell, fname:str|Path):
     if not fname.exists(): raise FileNotFoundError(fname)
     self._nbrun_fname = fname
 
+# %% ../nbs/00_shell.ipynb #5c3684ec
+@patch
+def _nbrun_cells(self:CaptureShell, msgids, fname, above=False, below=False, all=False, exported=False, skip_noeval=False):
+    "The cells `nbrun`/`nbrun_async` will run, in the order given"
+    fname = ifnone(fname, getattr(self,'_nbrun_fname',None))
+    if not fname: raise ValueError('No `fname` passed and no notebook opened with `nbopen`')
+    self.nbopen(fname)
+    nb = read_nb(fname)
+    if all or not msgids: msgids = (None,)
+    return [c for m in msgids for c in select_cells(nb, m, above=above, below=below, all=all, exported=exported, skip_noeval=skip_noeval)]
+
+# %% ../nbs/00_shell.ipynb #88b8fa8b
 @patch
 def nbrun(
     self:CaptureShell,
@@ -397,16 +463,29 @@ def nbrun(
     stop_on_error:bool=True, # Stop after the first cell whose run errors?
 ):
     "Run cell(s) from a notebook by id prefix, printing rendered outputs"
-    fname = ifnone(fname, getattr(self,'_nbrun_fname',None))
-    if not fname: raise ValueError('No `fname` passed and no notebook opened with `nbopen`')
-    self.nbopen(fname)
-    nb = read_nb(fname)
-    if all or not msgids: msgids = (None,)
-    for msgid in msgids:
-        for cell in select_cells(nb, msgid, above=above, below=below, all=all, exported=exported, skip_noeval=skip_noeval):
-            outs = self.run(cell.source)
-            if res := render_text(outs): print(f'--- {cell.id} ---\n{res}')
-            if stop_on_error and any(o.get('output_type')=='error' for o in outs): return
+    for cell in self._nbrun_cells(msgids, fname, above, below, all, exported, skip_noeval):
+        outs = self.run(cell.source)
+        if res := render_text(outs): print(f'--- {cell.id} ---\n{res}')
+        if stop_on_error and any(o.get('output_type')=='error' for o in outs): return
+
+# %% ../nbs/00_shell.ipynb #23f839ff
+@patch
+async def nbrun_async(
+    self:CaptureShell,
+    *msgids:str, # Cell id prefixes to run, in the order given
+    fname:str|Path=None, # Notebook path (defaults to last `nbopen`)
+    above:bool=False, # Also run all cells above the match?
+    below:bool=False, # Also run all cells below the match?
+    all:bool=False, # Run all code cells?
+    exported:bool=False, # Only cells with `#| export` or `#| exports`?
+    skip_noeval:bool=False, # Skip `#| eval: false` and `nbdev_export` cells (like `nbdev-test`)?
+    stop_on_error:bool=True, # Stop after the first cell whose run errors?
+):
+    "Async `nbrun`: awaits each cell on the calling loop, so cells with top-level `await` work from async callers"
+    for cell in self._nbrun_cells(msgids, fname, above, below, all, exported, skip_noeval):
+        outs = await self.run_async(cell.source)
+        if res := render_text(outs): print(f'--- {cell.id} ---\n{res}')
+        if stop_on_error and any(o.get('output_type')=='error' for o in outs): return
 
 # %% ../nbs/00_shell.ipynb #1227c8b1
 @call_parse
