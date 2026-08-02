@@ -6,7 +6,7 @@ Docs: https://AnswerDotAI.github.io/execnb/shell.html.md"""
 
 # %% auto #0
 __all__ = ['leading_comment_lines', 'CaptureShell', 'format_exc', 'NbResult', 'render_outputs', 'find_output', 'out_exec',
-           'out_stream', 'out_error', 'select_cells', 'exec_nb', 'SmartCompleter']
+           'out_stream', 'out_error', 'exec_nb', 'SmartCompleter']
 
 # %% ../nbs/00_shell.ipynb #535003cf
 from fastcore.utils import *
@@ -71,6 +71,7 @@ def leading_comment_lines(lines):
 # %% ../nbs/00_shell.ipynb #e3fb2bee
 class CaptureShell(InteractiveShell):
     displayhook_class = _CustDisplayHook
+    _nested = False
 
     def __init__(self, path:str|Path=None, mpl_format='retina', history=False, timeout:Optional[int]=None, profile:bool=False):
         cfg = _profile_cfg()[0] if profile else Config()
@@ -79,7 +80,7 @@ class CaptureShell(InteractiveShell):
         self.input_transformers_cleanup.append(leading_comment_lines)
         self.history_manager.enabled = history
         self.timeout = timeout
-        self.result,self.exc,self._cell_idx,self._fname,self._nested = None,None,None,None,False
+        self.result,self.exc,self._cell_idx,self._fname = None,None,None,None
         if path: self.set_path(path)
         self.display_formatter.active = True
         if not in_notebook(): InteractiveShell._instance = self
@@ -271,6 +272,15 @@ async def run_async(
     self.exc = res.exception
     return _out_nb(res, self.display_formatter)
 
+# %% ../nbs/00_shell.ipynb #16013a92
+@patch
+def showtraceback(self:CaptureShell, *args, **kwargs):
+    "A captured run reports its exception structurally; IPython's printed traceback would be a colored duplicate in the stream"
+
+@patch
+def showsyntaxerror(self:CaptureShell, *args, **kwargs):
+    "Like `showtraceback`"
+
 # %% ../nbs/00_shell.ipynb #f698a432
 def _pre(s, xtra=''): return f"<pre {xtra}><code>{escape(s)}</code></pre>"
 def _strip(s): return strip_ansi(escape(s))
@@ -398,94 +408,8 @@ def prettytb(self:CaptureShell,
     fname_str = f' in {fname}' if fname else ''
     return f"{type(self.exc).__name__}{fname_str}:\n{_fence}\n{cell_str}\n"
 
-# %% ../nbs/00_shell.ipynb #de6bd9f6
-def _is_exported(cell): return cell.has_directive('export') or cell.has_directive('exports')
-def _is_noeval(cell):
-    return 'nbdev_export'+'(' in cell.source or (cell.directive('eval') or '').lower()=='false'
-
-def select_cells(
-    nb, # A notebook read with `read_nb`
-    msgid:str=None, # Cell id, or unique prefix, to match
-    above:bool=False, # Include the matched cell and all cells above it?
-    below:bool=False, # Include the matched cell and all cells below it?
-    all:bool=False, # Include all code cells (ignores `msgid`)?
-    exported:bool=False, # Only cells with `#| export` or `#| exports`?
-    skip_noeval:bool=False # Skip `#| eval: false` and `nbdev_export` cells (like `nbdev-test`)?
-):
-    "Select code cells from `nb` by cell id or unique prefix"
-    cells = [o for o in nb.cells if o.cell_type=='code']
-    if not all:
-        if not msgid: raise ValueError('`msgid` required unless `all=True`')
-        idxs = [i for i,o in enumerate(cells) if str(o.id).startswith(msgid)]
-        if not idxs: raise ValueError(f'No code cell id starting with {msgid!r}')
-        if len(idxs)>1: raise ValueError(f'Multiple code cell ids start with {msgid!r}: {", ".join(str(cells[i].id) for i in idxs)}')
-        idx = idxs[0]
-        if above: cells = cells[:idx+1]
-        elif below: cells = cells[idx:]
-        else: cells = [cells[idx]]
-    if exported: cells = [o for o in cells if _is_exported(o)]
-    if skip_noeval: cells = [o for o in cells if not _is_noeval(o)]
-    return cells
-
 # %% ../nbs/00_shell.ipynb #9c16e245
 from fastcore.nbio import render_text
-
-# %% ../nbs/00_shell.ipynb #ec223d10
-@patch
-def nbopen(self:CaptureShell, fname:str|Path):
-    "Set the default notebook for `nbrun`"
-    fname = Path(fname)
-    if not fname.exists(): raise FileNotFoundError(fname)
-    self._nbrun_fname = fname
-
-# %% ../nbs/00_shell.ipynb #5c3684ec
-@patch
-def _nbrun_cells(self:CaptureShell, msgids, fname, above=False, below=False, all=False, exported=False, skip_noeval=False):
-    "The cells `nbrun`/`nbrun_async` will run, in the order given"
-    fname = ifnone(fname, getattr(self,'_nbrun_fname',None))
-    if not fname: raise ValueError('No `fname` passed and no notebook opened with `nbopen`')
-    self.nbopen(fname)
-    nb = read_nb(fname)
-    if all or not msgids: msgids = (None,)
-    return [c for m in msgids for c in select_cells(nb, m, above=above, below=below, all=all, exported=exported, skip_noeval=skip_noeval)]
-
-# %% ../nbs/00_shell.ipynb #88b8fa8b
-@patch
-def nbrun(
-    self:CaptureShell,
-    *msgids:str, # Cell id prefixes to run, in the order given
-    fname:str|Path=None, # Notebook path (defaults to last `nbopen`)
-    above:bool=False, # Also run all cells above the match?
-    below:bool=False, # Also run all cells below the match?
-    all:bool=False, # Run all code cells?
-    exported:bool=False, # Only cells with `#| export` or `#| exports`?
-    skip_noeval:bool=False, # Skip `#| eval: false` and `nbdev_export` cells (like `nbdev-test`)?
-    stop_on_error:bool=True, # Stop after the first cell whose run errors?
-):
-    "Run cell(s) from a notebook by id prefix, printing rendered outputs"
-    for cell in self._nbrun_cells(msgids, fname, above, below, all, exported, skip_noeval):
-        outs = self.run(cell.source)
-        if res := render_text(outs): print(f'--- {cell.id} ---\n{res}')
-        if stop_on_error and any(o.get('output_type')=='error' for o in outs): return
-
-# %% ../nbs/00_shell.ipynb #23f839ff
-@patch
-async def nbrun_async(
-    self:CaptureShell,
-    *msgids:str, # Cell id prefixes to run, in the order given
-    fname:str|Path=None, # Notebook path (defaults to last `nbopen`)
-    above:bool=False, # Also run all cells above the match?
-    below:bool=False, # Also run all cells below the match?
-    all:bool=False, # Run all code cells?
-    exported:bool=False, # Only cells with `#| export` or `#| exports`?
-    skip_noeval:bool=False, # Skip `#| eval: false` and `nbdev_export` cells (like `nbdev-test`)?
-    stop_on_error:bool=True, # Stop after the first cell whose run errors?
-):
-    "Async `nbrun`: awaits each cell on the calling loop, so cells with top-level `await` work from async callers"
-    for cell in self._nbrun_cells(msgids, fname, above, below, all, exported, skip_noeval):
-        outs = await self.run_async(cell.source)
-        if res := render_text(outs): print(f'--- {cell.id} ---\n{res}')
-        if stop_on_error and any(o.get('output_type')=='error' for o in outs): return
 
 # %% ../nbs/00_shell.ipynb #1227c8b1
 @call_parse
