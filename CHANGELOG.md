@@ -2,6 +2,15 @@
 
 <!-- do not remove -->
 
+## 0.2.10
+
+### New Features
+
+- Add CaptureShell.`run_text` to execute code and return its outputs rendered as concise text ([#94](https://github.com/AnswerDotAI/execnb/issues/94))
+- move nbopen/nbrun/`select_cells` to fastcore, and suppress IPython duplicate traceback printing ([#93](https://github.com/AnswerDotAI/execnb/issues/93))
+- Add real async execution to CaptureShell: `arun_cell`, `run_async`, and `nbrun_async` now await cells on the calling loop so top-level await works ([#92](https://github.com/AnswerDotAI/execnb/issues/92))
+
+
 ## 0.2.9
 
 ### New Features
