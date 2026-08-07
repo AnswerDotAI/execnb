@@ -10,6 +10,7 @@ __all__ = ['leading_comment_lines', 'CaptureShell', 'format_exc', 'NbResult', 'r
 
 # %% ../nbs/00_shell.ipynb #535003cf
 from fastcore.utils import *
+from fastcore.meta import delegates
 from fastcore.script import call_parse
 from fastcore.ansi import strip_ansi
 
@@ -410,6 +411,13 @@ def prettytb(self:CaptureShell,
 
 # %% ../nbs/00_shell.ipynb #9c16e245
 from fastcore.nbio import render_text
+
+# %% ../nbs/00_shell.ipynb #31536fa0
+@patch
+@delegates(CaptureShell.run)
+def run_text(self:CaptureShell, code, **kwargs):
+    "Run `code`, returning its outputs rendered as concise text: what a notebook's output area shows"
+    return render_text(self.run(code, **kwargs))
 
 # %% ../nbs/00_shell.ipynb #1227c8b1
 @call_parse
