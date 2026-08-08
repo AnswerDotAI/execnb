@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.11.1">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="description" content="A shell for running notebook code without a notebook server">
+
+<title>shell – execnb</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js" integrity="sha384-ZvpUoO/+PpLXR1lu4jmpXWu80pZlYUAfxl5NsBMWOEPSjUn/6Z/hRTt8+pR6L4N2" crossorigin="anonymous"></script><script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-d5b4e69c7e37b49c6591bcc5116dd748.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-2b6a17fde00b5ccb222bcc6fbf188e31.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script src="https://cdn.jsdelivr.net/npm/requirejs@2.3.6/require.min.js" integrity="sha384-c9c+LnTbwQ3aujuU7ULEPVvgLs+Fn6fJUvIGTsuu1ZcCf11fiEubah0ttpca4ntM sha384-6V1/AdqZRWk1KAlWbKBlGhN7VG4iE/yAZcO6NZPMF8od0vukrvr0tg4qY6NSrItx" crossorigin="anonymous"></script>
+
+<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
+
+
+<link rel="stylesheet" href="styles.css">
+<meta property="og:title" content="shell – execnb">
+<meta property="og:description" content="A shell for running notebook code without a notebook server">
+<meta property="og:image" content="https://AnswerDotAI.github.io/execnb/data:image/png;base64,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">
+<meta property="og:site_name" content="execnb">
+<meta name="twitter:title" content="shell – execnb">
+<meta name="twitter:description" content="A shell for running notebook code without a notebook server">
+<meta name="twitter:image" content="https://AnswerDotAI.github.io/execnb/data:image/png;base64,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">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+
+<body class="nav-sidebar floating nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">execnb</span>
+    </a>
+  </div>
+        <div class="quarto-navbar-tools tools-end">
+</div>
+          <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./shell.html">shell</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">execnb</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./shell.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">shell</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#cells-run" id="toc-cells-run" class="nav-link active" data-scroll-target="#cells-run">Cells / run</a></li>
+  <li><a href="#nbs" id="toc-nbs" class="nav-link" data-scroll-target="#nbs">NBs</a></li>
+  <li><a href="#render_text" id="toc-render_text" class="nav-link" data-scroll-target="#render_text">render_text</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/AnswerDotAI/execnb/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div><div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="shell.html.md"><i class="bi bi-file-code"></i>Markdown</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">shell</h1>
+</div>
+
+<div>
+  <div class="description">
+    A shell for running notebook code without a notebook server
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!-- WARNING: THIS FILE WAS AUTOGENERATED! DO NOT EDIT! -->
+<div id="f5f6279b" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> fastcore.ansi <span class="im">import</span> ansi2html</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> IPython.display <span class="im">import</span> HTML</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> fastcore.test <span class="im">import</span> <span class="op">*</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> base64 <span class="im">import</span> b64decode</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> io <span class="im">import</span> BytesIO</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> PIL <span class="im">import</span> Image</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> tempfile</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> contextlib <span class="im">import</span> contextmanager</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="0d53a6c0" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>s <span class="op">=</span> InteractiveShell()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Captured execution is factored into three pieces. <code>_captured</code> wraps a run with output capture, stdin blocking, and the optional SIGALRM timeout. <code>_run_res</code> packages the result and captured streams as the <code>AttrDict</code> that rendering uses. The run call itself comes in two forms sharing those pieces: <code>_run_async</code> awaits <a href="https://fastcore.fast.ai/nbio.html#run_cell"><code>fastcore.nbio.run_cell</code></a> on the calling loop, and is the path everything public uses, while sync <code>_run</code> goes through IPython’s own <code>run_cell</code> entry, for constructor-time setup lines that run before any loop exists.</p>
+<p><code>profile=True</code> makes a <a href="https://AnswerDotAI.github.io/execnb/shell.html#captureshell"><code>CaptureShell</code></a> behave like <code>ipykernel</code> at startup: it reads the IPython profile (honoring <code>IPYTHONDIR</code>), applies shell config traits from <code>ipython_config.py</code> and <code>ipython_kernel_config.py</code>, loads their <code>InteractiveShellApp.extensions</code>, and runs the profile’s <code>startup</code> files. (<code>exec_lines</code>/<code>exec_files</code> are not run.)</p>
+<p>To demo profile loading we need a temporary IPython profile:</p>
+<div id="46e8dfbc" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="at">@contextmanager</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> _tmp_profile(cfg<span class="op">=</span><span class="st">''</span>, kcfg<span class="op">=</span><span class="st">''</span>, startup<span class="op">=</span><span class="st">''</span>):</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">with</span> tempfile.TemporaryDirectory() <span class="im">as</span> td, modified_env(IPYTHONDIR<span class="op">=</span>td):</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>        pd <span class="op">=</span> Path(td)<span class="op">/</span><span class="st">'profile_default'</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>        (pd<span class="op">/</span><span class="st">'startup'</span>).mkdir(parents<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> cfg: (pd<span class="op">/</span><span class="st">'ipython_config.py'</span>).write_text(cfg)</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> kcfg: (pd<span class="op">/</span><span class="st">'ipython_kernel_config.py'</span>).write_text(kcfg)</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> startup: (pd<span class="op">/</span><span class="st">'startup'</span><span class="op">/</span><span class="st">'00-start.py'</span>).write_text(startup)</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>        <span class="cf">yield</span> td</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Startup files in the profile’s <code>startup</code> directory are run, so their variables appear in the shell’s namespace:</p>
+<div id="658ce8aa" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> _tmp_profile(startup<span class="op">=</span><span class="st">"a=7</span><span class="ch">\n</span><span class="st">"</span>): test_eq(CaptureShell(profile<span class="op">=</span><span class="va">True</span>).user_ns[<span class="st">'a'</span>], <span class="dv">7</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Extensions and startup files often print or display things as they load; <code>load_profile</code> suppresses that output so it can’t leak into test runs or captured results (failures still surface as warnings):</p>
+<div id="1a9f0b67" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> _tmp_profile(startup<span class="op">=</span><span class="st">"b=1</span><span class="ch">\n</span><span class="st">print('starting up')</span><span class="ch">\n</span><span class="st">"</span>):</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">with</span> capture_output() <span class="im">as</span> cap: sp <span class="op">=</span> CaptureShell(profile<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>test_eq((cap.stdout, sp.user_ns[<span class="st">'b'</span>]), (<span class="st">''</span>, <span class="dv">1</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Shell config traits from the profile’s config files are applied too:</p>
+<div id="13f48ae2" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> _tmp_profile(kcfg<span class="op">=</span><span class="st">"c.InteractiveShell.ast_node_interactivity='all'</span><span class="ch">\n</span><span class="st">"</span>):</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    test_eq(CaptureShell(profile<span class="op">=</span><span class="va">True</span>).ast_node_interactivity, <span class="st">'all'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>With the default <code>history=False</code>, the shell’s history database lives in memory, so creating shells never writes a <code>history.sqlite</code> into the profile directory:</p>
+<div id="45e7c64d" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> _tmp_profile() <span class="im">as</span> td:</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    CaptureShell(profile<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    test_eq((Path(td)<span class="op">/</span><span class="st">'profile_default'</span><span class="op">/</span><span class="st">'history.sqlite'</span>).exists(), <span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<section id="cells-run" class="level3">
+<h3 class="anchored" data-anchor-id="cells-run">Cells / run</h3>
+<p>Captured runs pass <code>store_history=True</code>, so IPython’s own trailing-<code>;</code> suppression applies, and the check is tokenizer-based: a comment after the <code>;</code> still suppresses. A cell magic’s payload is unaffected, since its transformed source ends in the <code>run_cell_magic(...)</code> call rather than a semicolon. That is the right behavior for payloads, which may be shell code, markup, or another language where a trailing <code>;</code> means nothing. A suppressed result is never populated, so no <code>execute_result</code> output appears. Streams are unaffected either way:</p>
+<div id="f959de63" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>cs <span class="op">=</span> CaptureShell(mpl_format<span class="op">=</span><span class="va">None</span>)</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>cs.register_magic_function(<span class="kw">lambda</span> line, cell: <span class="st">'visible'</span>, <span class="st">'cell'</span>, <span class="st">'visible'</span>)</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>res <span class="op">=</span> <span class="cf">await</span> cs.run(<span class="st">"</span><span class="sc">%%</span><span class="st">visible</span><span class="ch">\n</span><span class="st">payload;"</span>)</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>test_eq(res[<span class="dv">0</span>][<span class="st">'data'</span>][<span class="st">'text/plain'</span>], [<span class="st">"'visible'"</span>])</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>test_eq(<span class="cf">await</span> cs.run(<span class="st">"1+1;"</span>), [])</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>test_eq(<span class="cf">await</span> cs.run(<span class="st">"print('kept'); 2;"</span>), [<span class="bu">dict</span>(output_type<span class="op">=</span><span class="st">'stream'</span>, name<span class="op">=</span><span class="st">'stdout'</span>, text<span class="op">=</span>[<span class="st">'kept</span><span class="ch">\n</span><span class="st">'</span>])])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="db9afaa6" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>s <span class="op">=</span> CaptureShell()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="125948f2" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="cf">await</span> s.run(<span class="st">"print(1)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>[{'name': 'stdout', 'output_type': 'stream', 'text': ['1\n']}]</code></pre>
+</div>
+</div>
+<p>Code can include magics and <code>!</code> shell commands:</p>
+<div id="6cb3fd41" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>o <span class="op">=</span> <span class="cf">await</span> s.run(<span class="st">"%time 1+1"</span>)</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>o</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>[{'name': 'stdout',
+  'output_type': 'stream',
+  'text': ['CPU times: user 1e+03 ns, sys: 0 ns, total: 1e+03 ns\n',
+   'Wall time: 1.91 us\n']},
+ {'data': {'text/plain': ['2']},
+  'metadata': {},
+  'output_type': 'execute_result',
+  'execution_count': None}]</code></pre>
+</div>
+</div>
+<p>The result of the last successful execution is stored in <code>result</code>:</p>
+<div id="6ac75a6c" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>s.result</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>2</code></pre>
+</div>
+</div>
+<p>A trailing <code>;</code> stops the result from being captured:</p>
+<div id="25dfd264" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="cf">await</span> s.run(<span class="st">"1+2;"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>[]</code></pre>
+</div>
+</div>
+<p>Code running inside a cell can itself call <code>run_cell</code> (the <code>%%capture</code> magic does exactly that). Such nested calls behave exactly as in plain IPython. They return an <code>ExecutionResult</code>, and their output flows to the enclosing capture context, so <code>%%capture</code> works:</p>
+<div id="2e4afe5e" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="cf">await</span> s.run(<span class="st">"</span><span class="sc">%%</span><span class="st">capture c</span><span class="ch">\n</span><span class="st">print(1)"</span>)</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>test_eq(s.user_ns[<span class="st">'c'</span>].stdout, <span class="st">'1</span><span class="ch">\n</span><span class="st">'</span>)</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a><span class="cf">await</span> s.run(<span class="st">"r = get_ipython().run_cell('7')"</span>)</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>test_eq(s.user_ns[<span class="st">'r'</span>].<span class="va">__class__</span>.<span class="va">__name__</span>, <span class="st">'ExecutionResult'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>IPython requires a cell magic to be the very first line of a cell: even a comment above it makes the <code>%%foo</code> line parse as a <em>line</em> magic named <code>%foo</code>, which fails with a confusing “Line magic function <code>%%foo</code> not found” error. <a href="https://AnswerDotAI.github.io/execnb/shell.html#captureshell"><code>CaptureShell</code></a> smooths both edges: leading blank and comment lines above a cell magic are dropped (extending IPython’s own <code>leading_empty_lines</code> cleanup), and when real code precedes the magic (which can’t be auto-fixed), the error message explains the actual problem.</p>
+<div id="bd43f376" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="cf">await</span> s.run(<span class="st">'# a narration comment</span><span class="ch">\n\n</span><span class="sc">%%</span><span class="st">capture c2</span><span class="ch">\n</span><span class="st">print(2)'</span>)</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>test_eq(s.exc, <span class="va">None</span>)</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>test_eq(s.user_ns[<span class="st">'c2'</span>].stdout, <span class="st">'2</span><span class="ch">\n</span><span class="st">'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="7ed5ca1e" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="cf">await</span> s.run(<span class="st">'a=1</span><span class="ch">\n</span><span class="sc">%%</span><span class="st">capture c3</span><span class="ch">\n</span><span class="st">print(3)'</span>)</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> <span class="st">'must start the cell'</span> <span class="kw">in</span> <span class="bu">str</span>(s.exc)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="60294a50" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>o <span class="op">=</span> <span class="cf">await</span> s.run(<span class="st">"1/0"</span>)</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>o</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>[{'name': 'stdout',
+  'output_type': 'stream',
+  'text': ['\x1b[31m---------------------------------------------------------------------------\x1b[39m\n',
+   '\x1b[31mZeroDivisionError\x1b[39m                         Traceback (most recent call last)\n',
+   '\x1b[36mFile \x1b[39m\x1b[32m&lt;ipython-input-1-9e1622b385b6&gt;:1\x1b[39m\n',
+   '\x1b[32m----&gt; \x1b[39m\x1b[32m1\x1b[39m \x1b[30;43m1\x1b[39;49m\x1b[30;43m/\x1b[39;49m\x1b[30;43m0\x1b[39;49m\n',
+   '\n',
+   '\x1b[31mZeroDivisionError\x1b[39m: division by zero\n']},
+ {'ename': 'ZeroDivisionError',
+  'evalue': 'division by zero',
+  'output_type': 'error',
+  'traceback': ['Traceback (most recent call last):\n',
+   '  File "/Users/jhoward/aai-ws/.venv/lib/python3.13/site-packages/IPython/core/interactiveshell.py", line 3748, in run_code\n    exec(code_obj, self.user_global_ns, self.user_ns)\n    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n',
+   '  File "&lt;ipython-input-1-9e1622b385b6&gt;", line 1, in &lt;module&gt;\n    1/0\n    ~^~\n',
+   'ZeroDivisionError: division by zero\n']}]</code></pre>
+</div>
+</div>
+<p>This is how IPython formats exceptions internally:</p>
+<div id="bf763821" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> IPython.core.ultratb <span class="im">import</span> VerboseTB</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="06031a14" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> warnings.catch_warnings():</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>    warnings.filterwarnings(<span class="st">"ignore"</span>, category<span class="op">=</span><span class="pp">DeprecationWarning</span>)</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>    formatter <span class="op">=</span> VerboseTB(color_scheme<span class="op">=</span><span class="st">'Linux'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="33fb2116" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="cf">try</span>: f()</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a><span class="cf">except</span> <span class="pp">Exception</span> <span class="im">as</span> e:</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>    ex <span class="op">=</span> e</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(formatter.text(<span class="bu">type</span>(e), e, e.__traceback__))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>---------------------------------------------------------------------------
+NameError                                 Traceback (most recent call last)
+Cell In[58], line 4
+      1 try: f()
+      2 except Exception as e:
+      3     ex = e
+----&gt; 4     print(formatter.text(type(e), e, e.__traceback__))
+
+NameError: name 'f' is not defined</code></pre>
+</div>
+</div>
+<div id="ac097335" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="cf">await</span> s.run(<span class="st">"import time; time.sleep(0.1); print('no timeout')"</span>, timeout<span class="op">=</span><span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>[{'name': 'stdout', 'output_type': 'stream', 'text': ['no timeout\n']}]</code></pre>
+</div>
+</div>
+<div id="c0e31a21" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>o <span class="op">=</span> <span class="cf">await</span> s.run(<span class="st">"import time; time.sleep(1.1)"</span>, timeout<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>o[<span class="dv">0</span>][<span class="st">'text'</span>][:<span class="dv">2</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>['\x1b[31m---------------------------------------------------------------------------\x1b[39m\n',
+ '\x1b[31mTimeoutError\x1b[39m                              Traceback (most recent call last)\n']</code></pre>
+</div>
+</div>
+<div id="519841ce" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>o1 <span class="op">=</span> <span class="cf">await</span> s.run(<span class="st">'from IPython.display import Markdown,display; print(0); print(1); display(Markdown("*2*")); Markdown("*1*")'</span>)</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>o1</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>[{'name': 'stdout', 'output_type': 'stream', 'text': ['0\n', '1\n']},
+ {'data': {'text/plain': ['Markdown(*2*)'], 'text/markdown': ['*2*']},
+  'metadata': {},
+  'output_type': 'display_data'},
+ {'data': {'text/plain': ['Markdown(*1*)'], 'text/markdown': ['*1*']},
+  'metadata': {},
+  'output_type': 'execute_result',
+  'execution_count': None}]</code></pre>
+</div>
+</div>
+<div id="bb8d5a3c" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>oaw <span class="op">=</span> render_text(<span class="cf">await</span> s.run(<span class="st">"import asyncio</span><span class="ch">\n</span><span class="st">await asyncio.sleep(0.01)</span><span class="ch">\n</span><span class="st">7"</span>))</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>test_is(<span class="st">'7'</span> <span class="kw">in</span> oaw, <span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>A captured run reports its exception structurally, packaged as an error output, so IPython’s own traceback print would be a colored duplicate in the captured stream. <code>showtraceback</code> therefore does nothing.</p>
+<p>An error cell yields exactly one output, the structural error, with no traceback text leaking into the stream:</p>
+<div id="9220f261" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>s <span class="op">=</span> CaptureShell()</span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>test_eq([x[<span class="st">'output_type'</span>] <span class="cf">for</span> x <span class="kw">in</span> <span class="cf">await</span> s.run(<span class="st">'1/0'</span>)], [<span class="st">'error'</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="567545b5" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>HTML(render_outputs(o))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code class="">---------------------------------------------------------------------------
+TimeoutError                              Traceback (most recent call last)
+Cell In[1], line 1
+----&gt; 1 import time; time.sleep(1.1)
+
+File &lt;ipython-input-1-289b30000b65&gt;:7, in run_cell.&lt;locals&gt;.handler(*args)
+      5 if not timeout: timeout = self.timeout
+      6 if timeout:
+----&gt; 7     def handler(*args): raise TimeoutError()
+      8     signal.signal(signal.SIGALRM, handler)
+      9     signal.alarm(timeout)
+
+TimeoutError: 
+</code></pre>
+</div>
+</div>
+<p>We can use <code>ansi2html</code> to convert from ANSI to HTML for color rendering. You need some <a href="https://github.com/fastai/fastcore/blob/master/examples/ansi.css">css styles</a> for the colors to render properly. Jupyter already has these built in so it’s not neccessary here, but if you plan on using this in another web app you will need to ensure that css styling is included.</p>
+<div id="5269f826" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>HTML(render_outputs(o, ansi2html))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code class="nohighlight hljs"><span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">TimeoutError</span>                              Traceback (most recent call last)
+<span class="ansi-cyan-fg">Cell</span><span class="ansi-cyan-fg"> </span><span class="ansi-green-fg">In[1]</span><span class="ansi-green-fg">, line 1</span>
+<span class="ansi-green-fg">----&gt; </span><span class="ansi-green-fg">1</span> <span class="ansi-bold" style="color: rgb(0,135,0)">import</span><span style="color: rgb(188,188,188)"> </span><span class="ansi-blue-intense-fg ansi-bold">time</span>; time.sleep(<span class="ansi-green-fg">1.1</span>)
+
+<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">&lt;ipython-input-1-289b30000b65&gt;:7</span>, in <span class="ansi-cyan-fg">run_cell.&lt;locals&gt;.handler</span><span class="ansi-blue-fg">(*args)</span>
+<span class="ansi-green-fg">      5</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> timeout: timeout = <span style="color: rgb(0,135,0)">self</span>.timeout
+<span class="ansi-green-fg">      6</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> timeout:
+<span class="ansi-green-fg">----&gt; </span><span class="ansi-green-fg">7</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">def</span><span style="color: rgb(188,188,188)"> </span><span class="ansi-blue-fg">handler</span>(*args): <span class="ansi-bold" style="color: rgb(0,135,0)">raise</span> <span class="ansi-bold" style="color: rgb(215,95,95)">TimeoutError</span>()
+<span class="ansi-green-fg">      8</span>     signal.signal(signal.SIGALRM, handler)
+<span class="ansi-green-fg">      9</span>     signal.alarm(timeout)
+
+<span class="ansi-red-fg">TimeoutError</span>: 
+</code></pre>
+</div>
+</div>
+<p>Images and matplotlib figures are captured:</p>
+<div id="ecec6fac" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>res <span class="op">=</span> <span class="cf">await</span> s.run(<span class="st">'''import matplotlib.pyplot as plt</span></span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a><span class="st">plt.figure(figsize=(2,1))</span></span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a><span class="st">plt.plot([1,2,4]);'''</span>)</span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a>HTML(render_outputs(res))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAYMAAAD0CAYAAAB5NErfAAAAOnRFWHRTb2Z0d2FyZQBNYXRwbG90bGliIHZlcnNpb24zLjExLjAsIGh0dHBzOi8vbWF0cGxvdGxpYi5vcmcvlcelbwAAAAlwSFlzAAAewgAAHsIBbtB1PgAAHYtJREFUeJzt3Qd0lGW+x/F/eiENQhokhBZKGioQwbVhAQMISNld3eOu3GU9R8VjAWHBawMVBFwL6rnrvbt4997lohALSLGtShGIsEoaNbRAekJ6T+ae54nJBmeAATL9+zknxzc8TObxnWF++T/P+zyvm8FgMAgAwKW527oDAADbIwwAAIQBAIAwAAAQBgAAwgAAoDGBDAAgDAAAhAEAgDAAABAGAACNCWQAAGEAACAMAACEAQCAMAAAaEwgAwAIAwAAYQAAEBFPW5yFb7/9VlavXt35/fz582XMmDG8IADgKmFQVVUlv/3tb+X06dOdf/brX//aIs/V0NAgmZmZ+jgsLEw8PW2SfQDQbVpaWqSkpEQfJyUlia+vb7f8XKt/Oj722GM6CPz8/KS+vt6iz6WCICUlxaLPAQC2kp6eLqNHj3a8q4k2btwo7733noSEhMgTTzxhzacGANhDZVBaWioPPvigPv7Tn/4ktbW1Fn9ONTTUNUGjoqIs/pwAYEkFBQWdIx5dP+McJgweeughKSoqkvHjx8vs2bPlrbfesvhzdp0jUEEQHR1t8ecEAGvpznlQqwwTrV27VjZs2CABAQHy7rvvWuMpAcAhtLS2icFgsHU3LB8G+fn5MnfuXH28fPlyiY2NtfRTAoBDOFhQJVPf3iWbMgps3RXLDxPNmTNHzp07JzfddJM8/PDD3fqzz5w5c8mxNQCwN00tbfLON8fkrX8ck5Y2gzz3SZaMHRgqYYE+zhkGakho69at+jrYv/zlL+Lm5tatPz8mJqZbfx4AWFrW2Up5akOGrgo6nKtrluc2Zsk7vxkpThcGJ06ckHnz5unjJUuWSFxcnKWeCgAcohp46x9H5Z1vcnU18HPHimuksq5Zgv29nCcM2tra9BVDNTU1ekHEk08+aYmnkby8PLMvwQIAW8k4UyFPrc+Qw0XVRm0e7m7y0C2D5NHbB4uPp4fYikXC4O2339b7D3l7e8tf//pX8fCwzP8gl4oCsGeNLa3yxpdH5c/bj0uriWpgWGSgrJw5QpKig8XWLBIG+/fv1//t2bOnPP/88yb/Tm5ubufxq6++KuvWrdPHL7zwgiQkJFiiWwBgNT/mqWrggBwtrjFq83R3k0fGDdZf3p72cVsZi04gq0VmaWlpl/x7e/bs6TzuuAwVABxRQ3OrvPblEfnP7cfFRDEg8VFBsnJWsiT0sX01YPEwUB/okydPvujf2bZtm77CSFETzR1bWFMVAHBU+0+dkwUbDkhuifF2O14ebvLobXHy0K2DxMvDPqoBi4fBqFGj9NfFFBYWdh6rIJg5c6YlugIAVqkGXv38sPzXzhNiajFxYt8gWTVrhAyLDLLbV4MN/gHgKnx/slwWbMiQE6XG1YC3h7s8dkecPHjzQLusBroiDADgCtQ1tcjKzw7Le9+dNFkNjIgOlpWzRsiQiEBxBIQBAFymvcfLZEFahpwqqzNqU1cHPXnnEJlz4wDxtPNqwC7CIDU1VdavX6+Px44da6tuAIDZahtbZMW2Q/Lfu0+ZbL+2X4isnJksg8MdoxqwizAYNGiQ/gIAR/BdbqksTMuQvHLj2/X6eLrL/PFD5d9uHKBXFDsihokA4CJqGltk+daD8r97TptsHxXbU1bMTJaBYQHiyAgDALiAnUfbq4GzFcbVgK+Xuzw1YZg8cEN/h60GuiIMAOBnqhua5eUtB+X/0k1vhpnSv5euBvr37iHOgjAAgC6+PVIii9IyJL+yQX7Oz8tD/pg6TO4fEyvuTlANdEUYAICIVDU0y0ufHpT395muBsYM7CUrZoyQfqH+Tnm+CAMALu/rQ8Wy6MNMKawyrgb8vT1k0cTh8puUfk5XDXRFGABwWerOYks+zZG0f5q+n/ovBofK8unJEtPLOauBrggDAC7py5wiWfxRphRXNxq1Bfh4yuKJw+XelJhuv3e7vSIMALiUiromeWFTjnz0w1mT7TfF9ZblM5Klb4ifuBLCAIDL+Cy7UJ7+KEtKa4yrgUAfT3lmcrzMGhXtMtVAV4QBAKdXXtskz2/Mlo0H8k223zo0TJZNT5KoYNeqBroiDAA4tS2ZBfLsJ6oaaDJqC/T1lOfuTpAZ1/V1yWqgK8IAgFNSQ0HPfZItmzMLTLbfPixcXp6eJBFBvlbvmz0iDAA4FYPBIJ9mFMhzG7P18NDPBft5yfNT4mXaNVQDXREGAJxGSXWjPPNxlmzL/tc91rsaHx8hL05LlHCqASOEAQCnqAbU5LCqBirqmo3ae/p7yQtTE+Xu5CiXnxu4EMIAgEMrrmqQpz/Oki9yiky2pyZGypKpiRIW6GP1vjkSwgCAw1YDauGYWkBWWW9cDfTq4S1LpybKpOQom/TP0RAGABxOYWWD3kriH4eKTbarAFgyJUFCA6gGzEUYAHCoamD9/jOy9NMcqW5oMWrvHdBeDaQmUQ1cLsIAgEPIr6jX20yrm8+YMvWaPnoBmRoewuUjDADYfTXw/vd58tLmg1LdaFwNqInhl6YlyviESJv0z1kQBgDslroR/R/TMmTH0VKT7dOv7SvP3h0vIf5UA1eLMABgl9XA2vTT8vLmg1Lb1GrUHhHkIy/fkyS3D4+wSf+cEWEAwK7kldfJwrQM+S63zGT7zJHR8sykeAn297J635wZYQDALrS1GeR/956S5VsPSZ2JaiAyyFeWzUiScUPDbdI/Z0cYALC5U2W1smBDhuw9UW6y/dejY2TxpOES5Es1YCmEAQCbVgP/vfukrNh2WOqbjauBPsG++haUNw8Js0n/XAlhAMAmTpTWysINGZJ+0nQ1cN/1/WRR6jAJpBqwCsIAgFW1thlkza4Tsurzw9LQ3GbUrm5Ev2JmsvxicG9eGSsiDABYTW5JjTy1/oD883SFyfb7x8TKwtRhEuDDR5O1ccYBWKUa+K8dx+VPXxyRxhbjaiCml5+8MiNZbhhENWArhAEAizpWXC3z12fIj3mmq4EHbugvC+4aKv7efBzZEmcfgEW0tLbJuzuOy+tfHpUmE9VAbKi/rJiRLNcPDOUVsAOEAYBud7iwWp7acEAyzlQatbm5ifzbLwbI/PFDxc/bg7NvJwgDAN2mubVN/vxtrrzx1VFpbjUYtQ/s3UNfKTSqfy/Oup0hDAB0i4MFVTJ//QHJzq8yanN3E5lz00B58s4h4utFNWCPCAMAV0XNB7zzzTF5++tjJquBQWE9ZOWsEXJdv56caTtGGAC4Ytn5lfpKIVUVmKoGHrx5kDx+RxzVgAMgDABcUTXw1tfH5J2vj0lLm3E1EBceoKuBa2JCOLsOgjAAcFkyz1TqK4UOFVYbtXm4u8lDtwySR28fLD6ezA04EsIAgFkaW1rlza+Oyn98e1yvKP65YZGBsnLmCEmKDuaMOiDCAMAlHcir0NXAkaIa4w8Rdzd5eNxgmTtusHh7unM2HRRhAOCCGppb9Qrid7fnioliQIZHBcmqWcmS0IdqwNERBgBM+ufpc3qH0dySWqM2Lw83mTsuTh4eN0i8PKgGnAFhAMCoGlC7i6pdRk1VA4l9g/TcgKoK4DwIAwCd9p0s1/ciPl5quhp4/I4h8uDNA6kGnBBhAEDqm1pl5WeHZc13J8RgohpIjg7W1cDQyEDOlpMiDAAXt/d4mSxMy5CTZXVGbd4e7vLEnUPkDzcNEE/mBpwaYQC4qLqmFlmx7bC8991Jk+1q9bC6UmhwONWAKyAMABe0O7e9GjhdblwN+Hi6y7zxQ+T3Nw7UK4rhGggDwIXUNrbI8q2H5H/2nDLZPjK2p77fwKCwAKv3DbZFGAAuYtexUn2l0NmKeqM2Xy93eWrCMH0/YqoB10QYAE6uuqFZlm09JGv3njbZntK/l7wyM1kG9O5h9b7BfhAGgBPbfqRE/piWIfmVDUZtfl4esvCuofLbsf3FnbkBl0cYAE6oqqFZXvr0oLy/L89k+5iBveSVGckSG0o1gHaEAeBkvj5cLIs/zJQCE9WAv7eHLEodJr+5PpZqAOchDAAnUVnXLEs358iG/WdMtt8wKFRXAzG9/K3eN9g/wgBwAl/mFMnijzKluLrRqK2Ht4c8PSle7k2JETc31g3ANMIAcGAVdU2yZFOOfPjDWZPtN8X1lmXTkyS6J9UALo4wABzUZ9mF8u8fZ0mJiWog0MdT/n3ycPnlKKoBmIcwABxMeW2TPL8xWzYeyDfZfuvQMHn5niTpE+Jn9b7BcREGgAPZmlkgz3ySJaU1TUZtgb6e8uzkeJk5Mpq5AVw2wgBwAGU1jfLsxmzZnFFgsv32YeHy0j1JEhnsa/W+wTkQBoAdMxgMsjmzQJ79JFsPD/1csJ+XPD8lXqZd05dqAFeFMADslJoYfvaTLNmaVWiy/c74CHlpWqKEB1EN4OoRBoAdVgNqclhNEp+razZqD/H3khemJMiUEX2oBtBtCAPAjhRXNcjTH2fJFzlFJtvvSoiUpdMSJSzQx+p9g3MjDAA7qQY++uGsvLApRyrrjauBXj28ZcnUBJmUFEU1AIsgDAAbK6pq0BvLfXWo2GT7pOQoWTIlQUIDqAZgOYQBYMNqQG0qt/TTHKlqaDFq7x3gLUunJkpqUpRN+gfXYpUwyM/P118FBQX6H0B4eLiMGDFC/PxYIQnXVFBZL4s+zJRvDpeYbFeTw89PSdDDQ4BDh8Hf//532bRpk2zfvl2HwM95eXnJ1KlTZcmSJTJ8+HBLdQOwK+qXoQ/25cmLnx6U6kZT1YCPvHRPokxIiLRJ/+C6LBYGK1eulAMHDnR+rz7wBwwYIJ6envrPT506JRs2bNCBsXbtWpk+fbqlugLYBXUjenULyh1HS02233NtX3nu7ngJ8acagJMNE/Xp00cefvhhmT17tj4+77ejDz6Q3//+91JbWyv33XefZGZmSlxcnCW7A9iEer+vTT8ty7YckhoT1UB4oI/eWO6O+Aib9A+waBgsWLBApk2bJv7+xvuoqxts/OpXv5LGxkb53e9+p//72muvyTvvvMOrAqeSV14nf/wwQ3YdKzPZrjaVe2ZSvAT7e1m9b0BX7mIh6rd9U0HQ1b333ts5ibxz505LdQWwurY2g/zPnlMy4fXtJoMgMshX1sweLatmjSAIYBdsemmpmkQODAyU+vp6qaqqsmVXgG5zuqxOFqQdkD3Hy022/2pUjDw9ebgE+VINwH7YNAzUVUbFxe0LbaKjo23ZFaBbqoG/7T4pr2w7LPXNrUbtfYJ9ZdmMZLllSBhnG3bHpmHw5ptvdh5PnDjxsh9/5syZi7abuqQV6G75FfWyJbNAPv7xrGSdNV3h3pvSTxZPHCaBVAOwUzYLg/3798urr76qj8PCwmTu3LmX/TNiYmIs0DPg0s6cq5NtWYX6XgM/nK644N/rG+Inr8xIlhvjenNaYddsEgbqN3a14Ky5uVlfWbRmzRoJCgqyRVeAy7oyaGtWgWzOLJQDeRcOgA73j4mVhanDJMCHXV9g/6z+Li0vL5cJEybI2bNn9fcvvviiTJo06Yp+Vl5e3iVDJyUl5Yp+NtAxGbwlq0APA2WcqTTrpMSG+suy6UlywyCqATgOq4ZBRUWFDgK1wExZtGiRLF68+Ip/HpPOsIRTZbV6+EcFwIXmAEzdfnJ8fIRMTIrSQ0JeHha7ahtw7DCorKzUQbBv3z79/fz58+Xll1+21tMDF3WitFZ/+Kuv7HzzAkDdcawjAFQV4O1JAMBxWSUM1BoCFQTp6en6+3nz5um9iwBbOl5Soz/81RzAwQLzAqCnv5feRE4FwNhBoVQAcBoWD4Pq6modBHv37u0MglWrVln6aQGTjhW3B4D6OlRYbdZZUttIqwBQdxm7fmAvAgBOydMaQbBnz57OoSEqAljb0aJq2ZJZqAPgcJF5ARCqAiDxpwAY0Es8mQOAk7NYGNTU1Ehqaqrs3r27c+O6V155xVJPB5znSFG1bM5orwCOFteYdXbUvQTuSmyfA7h+QKh4uLtxVuEyLBYGah3Brl279PG1116rv9atW3fRx6idTNW6A+BKtolWv/VvUQGQVaiHg8wRFugjqYntcwCj+/ciAOCy3AzqX5EFBAQE6HsVXA61CE3d/Ka7qO0qOlYpqzUJXIrqXNRb92BB9U8LwQrkeIl577fwLgEwigCAgzljoc81i1UGM2fOlIaGhst6jLs7l+bh0gGQU1D10yRwob4k1BwRQSoAomRScpSM7NdT3BkCAqwTBu+9956lfjRcMADUtf/qt/+tmQVysqzOrMdFBfvqAJiYFCnXEQDARbFpCuw2ADLPVnZeBXS63LwAUNtEpyapAIiSa2NCqAAAMxEGsKsAUPv/6CGgrALJK68363FqZ1D1278KgGtiQrgIAbgChAFsHgA/5lV0zgGcrTAvAKJ7+uk1AKoKGBEdTAAAV4kwgE3uCPZDXoUe/9+aZX4AxPRSFUCUDoGkvgQA0J0IA1gxAM7J5oxCfSloQWWD2dtBdwRAQp8gKgDAQggDWDQA9p9WAVCg7wpWWGVeAAzo3UPPAagrgQgAwDoIA3Sr1jaD7DtZrucA1BBQcXWjWY8bqAOg/Sqg4VGBVACAlREG6JYA+L5LAJSYGQCDwnro4Z+JyVEyNIIAAGyJMMAVB8DeE2U6ALZlFUlpjXkBEBce0FkBDIkIoAIA7ARhALO1tLbJ3hPleiXw59mFUlrTZNbj1Id+xyRwXEQgZxywQ4QBLhkAe47/KwDKas0LgGGRgT9VAJEyOJwAAOwdYQAjza1tsju3fQjos+xCOVfXbNZZGh4VJJPUVUBJUTIoLIAzCzgQwgCdAbDrWKkOgM9ziqTCzACIVwGQHKW3hB5IAAAOizBwYU0tbbIrt1TfEEYFQGW9eQGQ2DeofQgoMUr69+5h8X4CsDzCwAUDYOexEr0S+IucQqlqaDHrccnRwToAVAUQG0oAAM6GMHABjS2tsuNI+xDQFweLpNrMAFAbwHVcBhrTy9/i/QRgO4SBk2pobpUdR9sD4MucIqluNC8A1BbQ7buBRkp0TwIAcBWEgZMFwLdHSnQAfHWwWGrMDIDr+oW0DwElRel7AwBwPYSBEwTAN4eL9b0AvjpYJLVNrWY9bmRsz845gD4EAODyCAMHVN/UHgBqIdg/DhVLnRkB4OYmMqozAKIkMtjXKn0F4BgIAwdR19QiXx9qHwJSAVDfbF4AjO7fSyYmti8EiwgiAACYRhjYsdrGFv3BrwLg68PF0tDcZlYApPTvpReC3ZUQKeEEAAAzEAZ2Rk36qrH/rZmFOgAaWy4dAO5uItcPCNVbQU9IiJDwQCoAAJeHMLAD1Q3NugJQdwRTVwOZGwBjB4Xq8f8JCZESFuhjlb4CcE6EgY1UNTTrCkCtBN5+tESvDL4UD3c3GTswVE8CqwogNIAAANA9CAMrUnv/qAVg6obw24+USlOreQFww6BQvRBsfEKk9OrhbZW+AnAthIEVAuCLnCI9CbzjaIk0txou/aK4u8kvBvfW9wIYHx8pPQkAABZGGFhARV2T3gVUBYDaFtqcAPDy6AiAKBkfHyEh/lQAAKyHMOgm52pVABTqlcAqAFrazAuAm+LCdADcOTxCgv29uqs7AHBZCIOrUK4CILtQrwRWdwYzJwC8Pdzl5iG99VVAd8RHSLAfAQDA9giDy1RW0yifZbcPAe0+Xiat5gSAp7vcHBcmk5Ij5fbhERLkSwAAsC+EgRlKaxplW1ahvgpI3Rze3AC4dYgKgCi5bVi4BBIAAOwYYXABJdWNsi27UN8Scu+JMjHj8198PN1l3NBwfS8AVQEE+HB6ATgGPq1M3Bj+d39N10NABjMCwNerPQDUJLCqAHoQAAAcEGHwM14e7noi+GJB4OfloT/4VQCMGxYm/t6cRgCOjU8xE9SWz+knys/7M3/vfwXArUMJAADOhTAwQe39/8KnOboCUGP/k5Ii5ZYh4eLn7WH9VwgArIAwMEHdBGbtnDFybb8Q8fUiAAA4P8LgAtT20ADgKtxt3QEAgO05dWXQ0tLSeVxQUGDTvgBAd+j6Wdb1M+5qOXUYlJSUdB6npKTYtC8AYInPuP79+3fLz2KYCAAgbgaDOetsHVNDQ4NkZmbq47CwMPH09LysUqyjmkhPT5eoqCiL9ROOj/cLrPWeUUNDHaMeSUlJ4uvrK93BqYeJ1EkaPXr0Vf8c9SJFR0d3S5/g/Hi/wNLvme4aGuqKYSIAAGEAACAMAACEAQCAMAAAaEwgAwAIAwCAky86AwCYh2EiAABhAAAgDAAAhAEAgDAAAGhMIAMACAMAAGEAACAMAABOf6ezK1FaWiofffSRZGRkSHl5ub5dpro13ZQpUyQgIMDW3YMdvl/27dunv7Kzs6W5uVn/+Ztvvil9+vSxdfdgZ44dOya7du2SEydOSGFhoVRVVUlwcLDEx8fLhAkTZMiQIbbrnNqOAu1Wr15t8Pf3V9tzGH2FhYUZ0tLSOFXQ1q5da+jfv7/J94r6OnjwIGcKndavX2+Iioq64PtFfbm5uRmmTZtmyM/PN9gClcFPVqxYIQsXLtTHAwcOlDlz5khMTIwcOXJE3n33XSkqKpJZs2bJBx98IDNmzLBdesMu5ObmysmTJyU0NFRGjhwpo0aNkr1798pXX31l667BDp08eVIKCgr0cb9+/eSuu+6Sa665RkJCQiQvL09/ruzfv18+/vhjOXDggK4e1H2RrcomEWRnsrOzDR4eHjqdU1JSDJWVlee1nz171hAbG6vbQ0JCDGVlZTbrK+xDbm6u4fjx4+f92SOPPEJlAJNWrlxpGDlypGHjxo2G1tZWo/a2tjbDggULOt8/s2bNMlgb6wxEZOnSpdLa2ipubm6yZs0aCQoKOi8w1djv6tWr9XFFRYW89tpr1k1s2B1VPQ4YMMDW3YCDuP/+++X777+Xu+++W9zdjT921WfPsmXLJCEhQX+v5i3VZ401uXwY1NXVyaZNm/TJuPHGG/VEjimTJk2S6Ohoffz+++9b9UUC4NgiIiL0B/7FqJC444479HFLS4seorYmlw+D9PR0qa2t1Sfjtttuu/CJcneXcePG6eOjR4/KmTNnrPYiAXANTU1NncfWvtWMy4dBVlZW58m4UFVgql1dRggA3anjAgQPDw+rX2bq8mGgZvI7dAwDXUjX9q6PA4Cr9be//a1zaEgNS/fs2VOsyeXDoLq6uvNk9OjR46Inq+uis66PA4CrXYz2+OOP62NfX19Zvny5WJvLh0HXMTovL6+Lnqyu7Y2NjRZ9YQC4hvLycpk8ebKcO3euc/X68OHDrd4Plw+DrtVAQ0PDRU9WfX195zFbUwC4Wmo7CrUA7fDhw/p7tfD1D3/4g9iCy4eB2hekw6Wu6+3a3vVxAHC51FCzCgK1/kB57LHHbDI81MHlwyAuLu68JeMXc+rUKZOPA4DLUVNTI6mpqbJ79279/dy5c+X1118XW3L5MBgxYkTnyVB7g1xMR4Kry746VgoCwOVQ65pUEKj9hzqCoGOHA1ty+TBITk7WG0cpW7Zskba2NpMnqrKyUnbs2KGPb7nlFgkMDLTqCwXAOYJg4sSJsnPnTrsKAsXlw0B54IEHOoeJ1q1bZ/JEvfHGG3rrCmX27NlWfIkAOIO6ujp91dD27dv1948++qjdBIFCGIjI/PnzO7eLfeSRR4y2IV67dq28+OKL+vi6666T++67zxavFQAHVV9frzep++abbzoni9UlpPbETW1dautO2AN1pyq1N1HHYjI1l9BxP4OOVYFqBbIa5+sYVoLrUleWqXtedPXjjz/q+xwo48ePP28ocezYsTJv3jyr9xP2YcGCBbJy5crORWVqhfGlqCGkW2+9VayFm9v8RN2cRP1jfuKJJ/TcgbrBhPpS/Pz85Je//KWsWrVKevfubbUXB/ZLrUlJS0u7YPvnn39u1f7A/tcTmPve6aCGlKyJyuACKwJzcnL0ikD14Z+UlMQiM5xHrUDv2PrcHKqqHDNmDGfRRf3www+dVaO5Ro8eLbGxsWIthAEAgAlkAABhAAAgDAAAhAEAQGPRGQCAMAAAEAYAAMIAAEAYAAA0JpABAIQBAIAwAAAQBgAAwgAAoDGBDAAgDAAAhAEAgDAAABAGAACNCWQAAGEAACAMAACEAQCAMAAAaEwgA4Dg/wGG9WVWdnHW5gAAAABJRU5ErkJggg==">
+</div>
+</div>
+<p>If an exception is raised then the exception type, object, and stacktrace are stored in <code>exc</code>:</p>
+<div id="d31a62eb" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>o <span class="op">=</span> <span class="cf">await</span> s.run(<span class="st">'raise Exception("Oops")'</span>)</span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>o</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>[{'name': 'stdout',
+  'output_type': 'stream',
+  'text': ['\x1b[31m---------------------------------------------------------------------------\x1b[39m\n',
+   '\x1b[31mException\x1b[39m                                 Traceback (most recent call last)\n',
+   '\x1b[36mCell\x1b[39m\x1b[36m \x1b[39m\x1b[32mIn[1]\x1b[39m\x1b[32m, line 1\x1b[39m\n',
+   '\x1b[32m----&gt; \x1b[39m\x1b[32m1\x1b[39m \x1b[38;5;28;01mraise\x1b[39;00m \x1b[38;5;167;01mException\x1b[39;00m(\x1b[33m"\x1b[39m\x1b[33mOops\x1b[39m\x1b[33m"\x1b[39m)\n',
+   '\n',
+   '\x1b[31mException\x1b[39m: Oops\n']},
+ {'ename': 'Exception',
+  'evalue': 'Oops',
+  'output_type': 'error',
+  'traceback': ['Traceback (most recent call last):\n',
+   '  File "/Users/jhoward/aai-ws/.venv/lib/python3.13/site-packages/IPython/core/interactiveshell.py", line 3748, in run_code\n    exec(code_obj, self.user_global_ns, self.user_ns)\n    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n',
+   '  File "&lt;ipython-input-1-01648acb07bd&gt;", line 1, in &lt;module&gt;\n    raise Exception("Oops")\n',
+   'Exception: Oops\n']}]</code></pre>
+</div>
+</div>
+<div id="7366a7e6" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb40"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>s.exc</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>Exception('Oops')</code></pre>
+</div>
+</div>
+<div id="d3fc3628" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb42"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>clean <span class="op">=</span> Path(<span class="st">'../tests/clean.ipynb'</span>)</span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>nb <span class="op">=</span> read_nb(clean)</span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>c <span class="op">=</span> nb.cells[<span class="dv">1</span>]</span>
+<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a>c</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display cell-output-markdown">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb43"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>{ <span class="st">'cell_type'</span>: <span class="st">'code'</span>,</span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">'execution_count'</span>: <span class="va">None</span>,</span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">'id'</span>: <span class="st">'b123d6d0'</span>,</span>
+<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">'idx_'</span>: <span class="dv">1</span>,</span>
+<span id="cb43-5"><a href="#cb43-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">'metadata'</span>: {},</span>
+<span id="cb43-6"><a href="#cb43-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">'outputs'</span>: [],</span>
+<span id="cb43-7"><a href="#cb43-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">'source'</span>: <span class="st">'print(1)</span><span class="ch">\n</span><span class="st">2'</span>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+<div id="158cbc4e" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb44"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="cf">await</span> s.cell(c)</span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a>c.outputs</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>[{'name': 'stdout', 'output_type': 'stream', 'text': ['1\n']},
+ {'data': {'text/plain': ['2']},
+  'metadata': {},
+  'output_type': 'execute_result',
+  'execution_count': None}]</code></pre>
+</div>
+</div>
+<p>Re-running a cell that no longer produces output clears its stale outputs:</p>
+<div id="6b62d7a1" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb46"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>c2 <span class="op">=</span> read_nb(clean).cells[<span class="dv">1</span>]</span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a><span class="cf">await</span> s.cell(c2)</span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> c2.outputs</span>
+<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a>c2.source <span class="op">=</span> <span class="st">'x = 1'</span></span>
+<span id="cb46-5"><a href="#cb46-5" aria-hidden="true" tabindex="-1"></a><span class="cf">await</span> s.cell(c2)</span>
+<span id="cb46-6"><a href="#cb46-6" aria-hidden="true" tabindex="-1"></a>test_eq(c2.outputs, [])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="2029888b" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb47"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>find_output(c.outputs)[<span class="st">'data'</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display cell-output-markdown">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb48"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a>{<span class="st">'text/plain'</span>: [<span class="st">'2'</span>]}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+<div id="f0dbb335" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb49"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>find_output(c.outputs, <span class="st">'stream'</span>)[<span class="st">'text'</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>['1\n']</code></pre>
+</div>
+</div>
+<div id="1e34216e" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb51"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>out_exec(c.outputs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>'2'</code></pre>
+</div>
+</div>
+<div id="b1e8f387" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb53"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a>out_stream(c.outputs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>'1'</code></pre>
+</div>
+</div>
+</section>
+<section id="nbs" class="level3">
+<h3 class="anchored" data-anchor-id="nbs">NBs</h3>
+<div id="801e6817" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb55"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a>nb.cells[<span class="dv">2</span>].outputs</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>[]</code></pre>
+</div>
+</div>
+<div id="92f08b1a" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb57"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a><span class="cf">await</span> s.run_all(nb)</span>
+<span id="cb57-2"><a href="#cb57-2" aria-hidden="true" tabindex="-1"></a>nb.cells[<span class="dv">2</span>].outputs</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>[{'data': {'text/plain': ['&lt;IPython.core.display.Markdown object&gt;'],
+   'text/markdown': ["This is *bold*. Here's a [link](https://www.fast.ai)."]},
+  'metadata': {},
+  'output_type': 'execute_result',
+  'execution_count': None}]</code></pre>
+</div>
+</div>
+<p>With <code>exc_stop=False</code> (the default), execution continues after exceptions, and exception details are stored into the appropriate cell’s output:</p>
+<div id="20dcc0a6" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb59"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a>nb.cells[<span class="op">-</span><span class="dv">1</span>].source</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>'raise Exception("Oopsie!")'</code></pre>
+</div>
+</div>
+<div id="8685b93f" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb61"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true" tabindex="-1"></a>nb.cells[<span class="op">-</span><span class="dv">1</span>].outputs</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>[{'name': 'stdout',
+  'output_type': 'stream',
+  'text': ['\x1b[31m---------------------------------------------------------------------------\x1b[39m\n',
+   '\x1b[31mException\x1b[39m                                 Traceback (most recent call last)\n',
+   '\x1b[36mCell\x1b[39m\x1b[36m \x1b[39m\x1b[32mIn[1]\x1b[39m\x1b[32m, line 1\x1b[39m\n',
+   '\x1b[32m----&gt; \x1b[39m\x1b[32m1\x1b[39m \x1b[38;5;28;01mraise\x1b[39;00m \x1b[38;5;167;01mException\x1b[39;00m(\x1b[33m"\x1b[39m\x1b[33mOopsie!\x1b[39m\x1b[33m"\x1b[39m)\n',
+   '\n',
+   '\x1b[31mException\x1b[39m: Oopsie!\n']},
+ {'ename': 'Exception',
+  'evalue': 'Oopsie!',
+  'output_type': 'error',
+  'traceback': ['Traceback (most recent call last):\n',
+   '  File "/Users/jhoward/aai-ws/.venv/lib/python3.13/site-packages/IPython/core/interactiveshell.py", line 3748, in run_code\n    exec(code_obj, self.user_global_ns, self.user_ns)\n    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n',
+   '  File "&lt;ipython-input-1-1c97c1d317ab&gt;", line 1, in &lt;module&gt;\n    raise Exception("Oopsie!")\n',
+   'Exception: Oopsie!\n']}]</code></pre>
+</div>
+</div>
+<p>With <code>exc_stop=True</code>, exceptions in a cell are raised and no further processing occurs:</p>
+<div id="832c25c0" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb63"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a><span class="cf">try</span>: <span class="cf">await</span> s.run_all(nb, exc_stop<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb63-2"><a href="#cb63-2" aria-hidden="true" tabindex="-1"></a><span class="cf">except</span> <span class="pp">Exception</span> <span class="im">as</span> e: <span class="bu">print</span>(<span class="ss">f"got exception: </span><span class="sc">{</span>e<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>got exception: Oopsie!</code></pre>
+</div>
+</div>
+<p>We can pass a function to <code>preproc</code> to have it run on every cell. It can modify the cell as needed. If the function returns <code>True</code>, then that cell will not be executed. For instance, to skip the cell which raises an exception:</p>
+<div id="7ded2410" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb65"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb65-1"><a href="#cb65-1" aria-hidden="true" tabindex="-1"></a>nb <span class="op">=</span> read_nb(clean)</span>
+<span id="cb65-2"><a href="#cb65-2" aria-hidden="true" tabindex="-1"></a><span class="cf">await</span> s.run_all(nb, preproc<span class="op">=</span><span class="kw">lambda</span> c: <span class="st">'raise'</span> <span class="kw">in</span> c.source)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>This cell will contain no output, since it was skipped.</p>
+<div id="d5c52794" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb66"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true" tabindex="-1"></a>nb.cells[<span class="op">-</span><span class="dv">1</span>].outputs</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>[]</code></pre>
+</div>
+</div>
+<div id="b34f55f2" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb68"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb68-1"><a href="#cb68-1" aria-hidden="true" tabindex="-1"></a>nb.cells[<span class="dv">1</span>].outputs</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>[{'name': 'stdout', 'output_type': 'stream', 'text': ['1\n']},
+ {'data': {'text/plain': ['2']},
+  'metadata': {},
+  'output_type': 'execute_result',
+  'execution_count': None}]</code></pre>
+</div>
+</div>
+<p>You can also pass a function to <code>postproc</code> to modify a cell after it is executed.</p>
+<p>This is a shortcut for the combination of <code>read_nb</code>, <a href="https://AnswerDotAI.github.io/execnb/shell.html#captureshell.run_all"><code>CaptureShell.run_all</code></a>, and <code>write_nb</code>.</p>
+<div id="085dc4ac" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb70"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb70-1"><a href="#cb70-1" aria-hidden="true" tabindex="-1"></a>s <span class="op">=</span> CaptureShell()</span>
+<span id="cb70-2"><a href="#cb70-2" aria-hidden="true" tabindex="-1"></a><span class="cf">try</span>:</span>
+<span id="cb70-3"><a href="#cb70-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">await</span> s.execute(clean, <span class="st">'tmp.ipynb'</span>)</span>
+<span id="cb70-4"><a href="#cb70-4" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(read_nb(<span class="st">'tmp.ipynb'</span>).cells[<span class="dv">1</span>].outputs)</span>
+<span id="cb70-5"><a href="#cb70-5" aria-hidden="true" tabindex="-1"></a><span class="cf">finally</span>: Path(<span class="st">'tmp.ipynb'</span>).unlink()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[{'name': 'stdout', 'output_type': 'stream', 'text': '1\n'}, {'data': {'text/plain': '2'}, 'execution_count': None, 'metadata': {}, 'output_type': 'execute_result'}]</code></pre>
+</div>
+</div>
+<div id="ae254c2f" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb72"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb72-1"><a href="#cb72-1" aria-hidden="true" tabindex="-1"></a>p <span class="op">=</span> Path.home()<span class="op">/</span><span class="st">'git'</span><span class="op">/</span><span class="st">'fastcore'</span><span class="op">/</span><span class="st">'nbs'</span></span>
+<span id="cb72-2"><a href="#cb72-2" aria-hidden="true" tabindex="-1"></a>n <span class="op">=</span> p<span class="op">/</span><span class="st">'03a_parallel.ipynb'</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>If an error occurs while running a notebook, you can retrieve a pretty version of the error with the <code>prettytb</code> method:</p>
+<div id="7dff07b6" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb73"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb73-1"><a href="#cb73-1" aria-hidden="true" tabindex="-1"></a>s <span class="op">=</span> CaptureShell()</span>
+<span id="cb73-2"><a href="#cb73-2" aria-hidden="true" tabindex="-1"></a><span class="cf">try</span>: <span class="cf">await</span> s.execute(<span class="st">'../tests/error.ipynb'</span>, exc_stop<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb73-3"><a href="#cb73-3" aria-hidden="true" tabindex="-1"></a><span class="cf">except</span>: <span class="bu">print</span>(s.prettytb())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>AssertionError in ../tests/error.ipynb:
+===========================================================================
+
+While Executing Cell #2:
+Traceback (most recent call last):
+  File "&lt;ipython-input-1-5c812627fe60&gt;", line 2, in &lt;module&gt;
+    try: s.execute('../tests/error.ipynb', exc_stop=True)
+         ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "&lt;ipython-input-1-4b062e10fd76&gt;", line 19, in execute
+    self.run_all(nb, exc_stop=exc_stop, preproc=preproc, postproc=postproc,
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        inject_code=inject_code, inject_idx=inject_idx, verbose=verbose)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "&lt;ipython-input-1-54c4c86f5c38&gt;", line 21, in run_all
+    if self.exc and exc_stop: raise self.exc from None
+                              ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jhoward/aai-ws/.venv/lib/python3.13/site-packages/IPython/core/interactiveshell.py", line 3748, in run_code
+    exec(code_obj, self.user_global_ns, self.user_ns)
+    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "&lt;ipython-input-1-b968a57a586e&gt;", line 3, in &lt;module&gt;
+    foo()
+    ~~~^^
+  File "/Users/jhoward/aai-ws/execnb/tests/err.py", line 2, in foo
+    assert 13 == 98
+           ^^^^^^^^
+AssertionError
+
+</code></pre>
+</div>
+</div>
+</section>
+<section id="render_text" class="level3">
+<h3 class="anchored" data-anchor-id="render_text">render_text</h3>
+<p>Downstream kernels (e.g clikernel) print each executed cell’s outputs as plain text, so nbio’s <code>render_text</code> is re-exported here for them. Running notebook cells by id in the current kernel is aidialog’s <code>%nbrun</code> magic, built on <a href="https://fastcore.fast.ai/nbio.html#select_cells"><code>fastcore.nbio.select_cells</code></a> and <a href="https://fastcore.fast.ai/nbio.html#run_cell"><code>fastcore.nbio.run_cell</code></a>.</p>
+<p><code>run_text</code> names the composition those kernels use: run code and return what a notebook’s output area would show, as concise text. One visible output renders bare (markdown-preferred), several arrive in <code>render_text</code>’s tagged form, and nothing visible is <code>''</code>.</p>
+<div id="0c35d061" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb75"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb75-1"><a href="#cb75-1" aria-hidden="true" tabindex="-1"></a>s <span class="op">=</span> CaptureShell()</span>
+<span id="cb75-2"><a href="#cb75-2" aria-hidden="true" tabindex="-1"></a>o <span class="op">=</span> <span class="cf">await</span> s.run_text(<span class="st">'print(1); 2'</span>)</span>
+<span id="cb75-3"><a href="#cb75-3" aria-hidden="true" tabindex="-1"></a>test_is(<span class="st">'1'</span> <span class="kw">in</span> o <span class="kw">and</span> <span class="st">'2'</span> <span class="kw">in</span> o, <span class="va">True</span>)</span>
+<span id="cb75-4"><a href="#cb75-4" aria-hidden="true" tabindex="-1"></a>test_eq(<span class="cf">await</span> s.run_text(<span class="st">'1;'</span>), <span class="st">''</span>)</span>
+<span id="cb75-5"><a href="#cb75-5" aria-hidden="true" tabindex="-1"></a>test_eq(<span class="cf">await</span> s.run_text(<span class="st">"class M:</span><span class="ch">\n</span><span class="st">    def _repr_markdown_(self): return '**hi**'</span><span class="ch">\n</span><span class="st">M()"</span>), <span class="st">'**hi**'</span>)</span>
+<span id="cb75-6"><a href="#cb75-6" aria-hidden="true" tabindex="-1"></a>test_is(<span class="st">'ZeroDivisionError'</span> <span class="kw">in</span> <span class="cf">await</span> s.run_text(<span class="st">'1/0'</span>), <span class="va">True</span>)</span>
+<span id="cb75-7"><a href="#cb75-7" aria-hidden="true" tabindex="-1"></a>o</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p><a href="https://AnswerDotAI.github.io/execnb/shell.html#render_outputs"><code>render_outputs</code></a> is HTML-oriented. Downstream kernels print each executed cell’s result to stdout instead, so we use fastcore’s <code>render_text</code>, which renders outputs to concise text.</p>
+<div id="2728b1b5" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb76"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb76-1"><a href="#cb76-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> is_sublist(sub, lst): <span class="cf">return</span> <span class="bu">any</span>(lst[i:i<span class="op">+</span><span class="bu">len</span>(sub)] <span class="op">==</span> sub <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(lst)<span class="op">-</span><span class="bu">len</span>(sub)<span class="op">+</span><span class="dv">1</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="9a633c1d" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb77"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb77-1"><a href="#cb77-1" aria-hidden="true" tabindex="-1"></a>s2 <span class="op">=</span> CaptureShell()</span>
+<span id="cb77-2"><a href="#cb77-2" aria-hidden="true" tabindex="-1"></a>r <span class="op">=</span> <span class="cf">await</span> s2.run(<span class="st">'from IPython.display import display,Markdown; display(Markdown("x"))'</span>)</span>
+<span id="cb77-3"><a href="#cb77-3" aria-hidden="true" tabindex="-1"></a>test_eq(r[<span class="dv">0</span>][<span class="st">'output_type'</span>], <span class="st">'display_data'</span>)</span>
+<span id="cb77-4"><a href="#cb77-4" aria-hidden="true" tabindex="-1"></a>r</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>([&lt;IPython.utils.capture.RichOutput&gt;], '')</code></pre>
+</div>
+</div>
+<p>If you pass <code>inject_code</code> to <a href="https://AnswerDotAI.github.io/execnb/shell.html#captureshell.execute"><code>CaptureShell.execute</code></a> or <a href="https://AnswerDotAI.github.io/execnb/shell.html#captureshell.run_all"><code>CaptureShell.run_all</code></a>, the source of <code>nb.cells[inject_idx]</code> will be replaced with <code>inject_code</code>. By default, the first cell is replaced. For instance consider this notebook:</p>
+<div id="bae2726b" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb79"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb79-1"><a href="#cb79-1" aria-hidden="true" tabindex="-1"></a>nb <span class="op">=</span> read_nb(<span class="st">'../tests/params.ipynb'</span>)</span>
+<span id="cb79-2"><a href="#cb79-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> c <span class="kw">in</span> nb.cells: <span class="bu">print</span>(<span class="st">'- '</span>,c.source)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>-  a=1
+-  print(a)</code></pre>
+</div>
+</div>
+<p>We can replace the first cell with <code>a=2</code> by passing that as <code>inject_code</code>, and the notebook will run with that change:</p>
+<div id="006785e8" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb81"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb81-1"><a href="#cb81-1" aria-hidden="true" tabindex="-1"></a>nb <span class="op">=</span> read_nb(<span class="st">'../tests/params.ipynb'</span>)</span>
+<span id="cb81-2"><a href="#cb81-2" aria-hidden="true" tabindex="-1"></a><span class="cf">await</span> s.run_all(nb, inject_code<span class="op">=</span><span class="st">"a=2"</span>)</span>
+<span id="cb81-3"><a href="#cb81-3" aria-hidden="true" tabindex="-1"></a><span class="bu">list</span>(nb.cells)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>[{'cell_type': 'code',
+  'execution_count': None,
+  'id': 'a63ce885',
+  'metadata': {'time_run': '2026-01-04T20:52:46.502210+00:00'},
+  'outputs': [],
+  'source': 'a=2',
+  'idx_': 0},
+ {'cell_type': 'code',
+  'execution_count': None,
+  'id': 'ea528db5',
+  'metadata': {'time_run': '2026-01-04T20:52:46.506607+00:00'},
+  'outputs': [{'name': 'stdout', 'output_type': 'stream', 'text': ['2\n']}],
+  'source': 'print(a)',
+  'idx_': 1}]</code></pre>
+</div>
+</div>
+<p>This can be used with <a href="https://AnswerDotAI.github.io/execnb/shell.html#captureshell.execute"><code>CaptureShell.execute</code></a> to parameterise runs of models in notebooks. Place any defaults for configuration code needed in the first cell, and then when running <code>execute</code> pass in new parameters as needed in <code>inject_code</code>. To replace only some of the defaults, leave an empty cell as the second cell, and inject code using <code>inject_idx=1</code> to replace the empty second cell with code that overrides some of the defaults set in the first cell. When using <code>execute</code> you can pass <code>inject_path</code> instead of <code>inject_code</code> to read the injected code from a file.</p>
+<p>This is the command-line version of <a href="https://AnswerDotAI.github.io/execnb/shell.html#captureshell.execute"><code>CaptureShell.execute</code></a>. Run <code>exec_nb -h</code> from the command line to see how to pass arguments. If you don’t pass <code>dest</code> then the output notebook won’t be saved; this is mainly useful for running tests.</p>
+<div id="f3b82fd2" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb83"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb83-1"><a href="#cb83-1" aria-hidden="true" tabindex="-1"></a>cc <span class="op">=</span> SmartCompleter(get_ipython())</span>
+<span id="cb83-2"><a href="#cb83-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb83-3"><a href="#cb83-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> test_set(a,b): <span class="cf">return</span> test_eq(<span class="bu">set</span>(a), <span class="bu">set</span>(b))</span>
+<span id="cb83-4"><a href="#cb83-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb83-5"><a href="#cb83-5" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> _f:</span>
+<span id="cb83-6"><a href="#cb83-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>): <span class="va">self</span>.bar,<span class="va">self</span>.baz,<span class="va">self</span>.room <span class="op">=</span> <span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span></span>
+<span id="cb83-7"><a href="#cb83-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb83-8"><a href="#cb83-8" aria-hidden="true" tabindex="-1"></a>foo <span class="op">=</span> _f()</span>
+<span id="cb83-9"><a href="#cb83-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb83-10"><a href="#cb83-10" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> <span class="bu">set</span>(cc(<span class="st">"b"</span>)).issuperset([<span class="st">'bool'</span>, <span class="st">'bytes'</span>])</span>
+<span id="cb83-11"><a href="#cb83-11" aria-hidden="true" tabindex="-1"></a>test_set(cc(<span class="st">"foo.b"</span>), [<span class="st">'bar'</span>, <span class="st">'baz'</span>])</span>
+<span id="cb83-12"><a href="#cb83-12" aria-hidden="true" tabindex="-1"></a>test_set(cc(<span class="st">"x=1; x = foo.b"</span>), [<span class="st">'bar'</span>, <span class="st">'baz'</span>])</span>
+<span id="cb83-13"><a href="#cb83-13" aria-hidden="true" tabindex="-1"></a>test_set(cc(<span class="st">"ab"</span>), [<span class="st">'abs'</span>])</span>
+<span id="cb83-14"><a href="#cb83-14" aria-hidden="true" tabindex="-1"></a>test_set(cc(<span class="st">"b = ab"</span>), [<span class="st">'abs'</span>])</span>
+<span id="cb83-15"><a href="#cb83-15" aria-hidden="true" tabindex="-1"></a>test_set(cc(<span class="st">""</span>), [])</span>
+<span id="cb83-16"><a href="#cb83-16" aria-hidden="true" tabindex="-1"></a>test_set(cc(<span class="st">"foo."</span>), [<span class="st">'bar'</span>, <span class="st">'baz'</span>, <span class="st">'room'</span>])</span>
+<span id="cb83-17"><a href="#cb83-17" aria-hidden="true" tabindex="-1"></a>test_set(cc(<span class="st">"nonexistent.b"</span>), [])</span>
+<span id="cb83-18"><a href="#cb83-18" aria-hidden="true" tabindex="-1"></a>test_set(cc(<span class="st">"foo.nonexistent.b"</span>), [])</span>
+<span id="cb83-19"><a href="#cb83-19" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> <span class="bu">set</span>(cc(<span class="st">"import ab"</span>)).issuperset([<span class="st">'abc'</span>])</span>
+<span id="cb83-20"><a href="#cb83-20" aria-hidden="true" tabindex="-1"></a>test_set(cc(<span class="st">"from abc import AB"</span>), [<span class="st">'ABC'</span>, <span class="st">'ABCMeta'</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="6256bf35" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb84"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb84-1"><a href="#cb84-1" aria-hidden="true" tabindex="-1"></a>s <span class="op">=</span> CaptureShell()</span>
+<span id="cb84-2"><a href="#cb84-2" aria-hidden="true" tabindex="-1"></a>cc <span class="op">=</span> SmartCompleter(s)</span>
+<span id="cb84-3"><a href="#cb84-3" aria-hidden="true" tabindex="-1"></a><span class="cf">await</span> s.run(<span class="st">'''def captures(pat, s, n, **kw):</span></span>
+<span id="cb84-4"><a href="#cb84-4" aria-hidden="true" tabindex="-1"></a><span class="st">    return 1'''</span>)</span>
+<span id="cb84-5"><a href="#cb84-5" aria-hidden="true" tabindex="-1"></a>cc(<span class="st">'captures('</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>['n=', 'pat=', 's=']</code></pre>
+</div>
+</div>
+<div id="68f8d111" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb86"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb86-1"><a href="#cb86-1" aria-hidden="true" tabindex="-1"></a>s <span class="op">=</span> CaptureShell()</span>
+<span id="cb86-2"><a href="#cb86-2" aria-hidden="true" tabindex="-1"></a><span class="cf">await</span> s.run(<span class="st">'a=1'</span>)</span>
+<span id="cb86-3"><a href="#cb86-3" aria-hidden="true" tabindex="-1"></a>s.complete(<span class="st">'a.b'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>['bit_count', 'bit_length']</code></pre>
+</div>
+</div>
+<div id="95a4f195" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb88"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb88-1"><a href="#cb88-1" aria-hidden="true" tabindex="-1"></a><span class="cf">await</span> s.run(<span class="st">'import re'</span>)</span>
+<span id="cb88-2"><a href="#cb88-2" aria-hidden="true" tabindex="-1"></a>s.complete(<span class="st">'re.compile('</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>['flags=', 'pattern=']</code></pre>
+</div>
+</div>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/AnswerDotAI\.github\.io\/execnb");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/AnswerDotAI/execnb/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>
