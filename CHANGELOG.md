@@ -2,6 +2,13 @@
 
 <!-- do not remove -->
 
+## 0.3.0
+
+### New Features
+
+- Make CaptureShell API async: run, cell, `run_all`, execute and `exec_nb` are now coroutines ([#95](https://github.com/AnswerDotAI/execnb/issues/95))
+
+
 ## 0.2.10
 
 ### New Features
