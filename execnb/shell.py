@@ -14,8 +14,8 @@ from fastcore.meta import delegates
 from fastcore.script import call_parse
 from fastcore.ansi import strip_ansi
 
-import multiprocessing,types,traceback,signal,builtins
-from contextlib import contextmanager
+import asyncio,io,multiprocessing,threading,types,traceback,builtins
+from contextlib import contextmanager,suppress
 try:
     if sys.platform == 'darwin': multiprocessing.set_start_method("fork")
 except RuntimeError: pass # if re-running cell
@@ -82,6 +82,9 @@ class CaptureShell(InteractiveShell):
         self.history_manager.enabled = history
         self.timeout = timeout
         self.result,self.exc,self._cell_idx,self._fname = None,None,None,None
+        self.loop = asyncio.new_event_loop()
+        self._thread = threading.Thread(target=self.loop.run_forever, daemon=True, name='CaptureShell-loop')
+        self._thread.start()
         if path: self.set_path(path)
         self.display_formatter.active = True
         if not in_notebook(): InteractiveShell._instance = self
@@ -100,6 +103,11 @@ class CaptureShell(InteractiveShell):
         if path.is_file(): path = path.parent
         self._run(f"import sys\nif '{path.as_posix()}' not in sys.path: sys.path.insert(0, '{path.as_posix()}')")
 
+    def close(self):
+        "Stop the shell's loop and thread; the shell can no longer run cells"
+        self.loop.call_soon_threadsafe(self.loop.stop)
+        self._thread.join(1)
+
     def enable_gui(self, gui=None): pass
 
 # %% ../nbs/00_shell.ipynb #6f0cac34
@@ -107,23 +115,13 @@ def _no_stdin(*args, **kw): raise StdinNotImplementedError('input() is not suppo
 
 @patch
 @contextmanager
-def _captured(self:CaptureShell, stdout=True, stderr=True, display=True, timeout=None, verbose=False):
-    "Output capture, stdin blocking, and optional SIGALRM timeout around one cell run"
-    if not timeout: timeout = self.timeout
-    prev_alarm = None
-    if timeout:
-        def handler(*args): raise TimeoutError()
-        prev_alarm = signal.signal(signal.SIGALRM, handler)
-        signal.alarm(timeout)
+def _captured(self:CaptureShell, stdout=True, stderr=True, display=True, verbose=False):
+    "Output capture and stdin blocking around one cell run"
     prev_input = builtins.input
     builtins.input = _no_stdin
     try:
         with capture_output(display=display, stdout=stdout and not verbose, stderr=stderr and not verbose) as c: yield c
-    finally:
-        builtins.input = prev_input
-        if timeout:
-            signal.alarm(0)
-            signal.signal(signal.SIGALRM, prev_alarm)
+    finally: builtins.input = prev_input
 
 # %% ../nbs/00_shell.ipynb #cdb9dc37
 @patch
@@ -137,18 +135,18 @@ def _run_res(self:CaptureShell, result, c):
 # %% ../nbs/00_shell.ipynb #5bc0e776
 @patch
 def _run(self:CaptureShell, raw_cell, store_history=False, silent=False, shell_futures=True, cell_id=None,
-    stdout=True, stderr=True, display=True, timeout=None, verbose=False):
-    "Sync captured run through IPython's own `run_cell` entry, for constructor-time setup lines that run before any loop exists"
-    with self._captured(stdout, stderr, display, timeout, verbose) as c:
+    stdout=True, stderr=True, display=True, verbose=False):
+    "Sync captured run through IPython's own `run_cell` entry, on the calling thread, for constructor-time setup lines"
+    with self._captured(stdout, stderr, display, verbose) as c:
         result = super(CaptureShell, self).run_cell(raw_cell, store_history, silent, shell_futures=shell_futures, cell_id=cell_id)
     return self._run_res(result, c)
 
 # %% ../nbs/00_shell.ipynb #1483d0f2
 @patch
 async def _run_async(self:CaptureShell, raw_cell, store_history=False, silent=False, shell_futures=True, cell_id=None,
-    stdout=True, stderr=True, display=True, timeout=None, verbose=False):
-    "Async `_run`: awaits the cell via `fastcore.nbio.run_cell` on the calling loop, so `raw_cell` may use top-level `await`"
-    with self._captured(stdout, stderr, display, timeout, verbose) as c:
+    stdout=True, stderr=True, display=True, verbose=False):
+    "Async `_run`: awaits the cell via `fastcore.nbio.run_cell`, so `raw_cell` may use top-level `await`; runs only on the shell's own loop"
+    with self._captured(stdout, stderr, display, verbose) as c:
         result = await run_cell(self, raw_cell, store_history, silent, shell_futures=shell_futures, cell_id=cell_id)
     return self._run_res(result, c)
 
@@ -207,18 +205,33 @@ def _out_nb(o, fmt):
         if p["output_type"]=="execute_result": p['execution_count'] = o.result.execution_count
     return res
 
+# %% ../nbs/00_shell.ipynb #01307010
+def _task_stacks(ts):
+    buf = io.StringIO()
+    for t in ts: t.print_stack(file=buf)
+    return buf.getvalue()
+
 # %% ../nbs/00_shell.ipynb #242f732f
 @patch
-async def run(
+def run(
     self:CaptureShell,
     code:str, # Python/IPython code to run
     stdout=True, # Capture stdout and save as output?
     stderr=True, # Capture stderr and save as output?
-    timeout:Optional[int]=None, # Shell command will time out after {timeout} seconds
-    verbose:bool=False # Show stdout/stderr during execution
+    timeout:Optional[int]=None, # Seconds before the run times out (None: `self.timeout`)
+    verbose:bool=False, # Show stdout/stderr during execution
+    grace:float=5 # Seconds to wait for cancellation after a timeout
 ):
-    "Run `code`, returning a list of all outputs in Jupyter notebook format"
-    res = await self._run_async(code, store_history=True, stdout=stdout, stderr=stderr, timeout=timeout, verbose=verbose)
+    "Run `code` on the shell's loop, returning a list of all outputs in Jupyter notebook format"
+    if timeout is None: timeout = self.timeout
+    fut = asyncio.run_coroutine_threadsafe(self._run_async(code, store_history=True, stdout=stdout, stderr=stderr, verbose=verbose), self.loop)
+    try: res = fut.result(timeout)
+    except TimeoutError:
+        stacks = _task_stacks(asyncio.all_tasks(self.loop))
+        fut.cancel()
+        with suppress(Exception): fut.result(grace)
+        self.exc = e = TimeoutError(f'Timed out after {timeout}s:\n{code}' + (f'\n\nTasks pending at timeout:\n{stacks}' if stacks else ''))
+        return NbResult([_out_exc(e)])
     self.result = res.result.result
     self.exc = res.exception
     return _out_nb(res, self.display_formatter)
@@ -269,11 +282,11 @@ def render_outputs(outputs, ansi_renderer=_strip, include_imgs=True, pygments=Fa
 
 # %% ../nbs/00_shell.ipynb #c6176b9e
 @patch
-async def cell(self:CaptureShell, cell, stdout=True, stderr=True, verbose=False):
+def cell(self:CaptureShell, cell, stdout=True, stderr=True, verbose=False, timeout=None):
     "Run `cell`, skipping if not code, and store outputs (and the execution count) back in cell"
     if cell.cell_type!='code': return
     self._cell_idx = cell.idx_ + 1
-    outs = await self.run(cell.source, verbose=verbose)
+    outs = self.run(cell.source, stdout=stdout, stderr=stderr, verbose=verbose, timeout=timeout)
     cell.outputs = _dict2obj(outs) if outs else []
     cell.execution_count = self.execution_count-1  # the count this run used: the shell has already advanced
 
@@ -308,7 +321,22 @@ def out_error(outp):
 def _false(o): return False
 
 @patch
-async def run_all(
+def _reap(self:CaptureShell,
+    before, # Tasks that existed before the run: never touched
+    grace:float=5 # Seconds to wait for cancellation before giving up
+):
+    "Cancel tasks a run left behind on the shell's loop, returning any that refuse to die"
+    ts = asyncio.all_tasks(self.loop) - before
+    if not ts: return []
+    async def _cancel():
+        for t in ts: t.cancel()
+        done,pend = await asyncio.wait(ts, timeout=grace)
+        return list(pend)
+    try: return asyncio.run_coroutine_threadsafe(_cancel(), self.loop).result(grace+1)
+    except TimeoutError: return list(ts)
+
+@patch
+def run_all(
     self:CaptureShell,
     nb, # A notebook read with `nbclient` or `read_nb`
     exc_stop:bool=False, # Stop on exceptions?
@@ -316,19 +344,24 @@ async def run_all(
     postproc:callable=_false, # Called after each cell is executed
     inject_code:str|None=None, # Code to inject into a cell
     inject_idx:int=0, # Cell to replace with `inject_code`
-    verbose:bool=False # Show stdout/stderr during execution
+    verbose:bool=False, # Show stdout/stderr during execution
+    cell_timeout:int=None, # Seconds before each cell times out (None: no limit)
+    grace:float=5 # Seconds to wait for cancellation before giving up
 ):
-    "Run all cells in `nb`, stopping at first exception if `exc_stop`"
+    "Run all cells in `nb`, stopping at first exception if `exc_stop`; tasks a run leaves behind are cancelled, with survivors in `self.leaks`"
     if inject_code is not None: nb.cells[inject_idx].source = inject_code
+    before = asyncio.all_tasks(self.loop)
     for cell in nb.cells:
         if not preproc(cell):
-            await self.cell(cell, verbose=verbose)
+            self.cell(cell, verbose=verbose, timeout=cell_timeout)
             postproc(cell)
-        if self.exc and exc_stop: raise self.exc from None
+        if self.exc and exc_stop: break
+    self.leaks = self._reap(before, grace)
+    if self.exc and exc_stop: raise self.exc from None
 
 # %% ../nbs/00_shell.ipynb #70808010
 @patch
-async def execute(
+def execute(
     self:CaptureShell,
     src:str|Path, # Notebook path to read from
     dest:str|None=None, # Notebook path to write to
@@ -338,15 +371,16 @@ async def execute(
     inject_code:str|None=None, # Code to inject into a cell
     inject_path:str|Path|None=None, # Path to file containing code to inject into a cell
     inject_idx:int=0, # Cell to replace with `inject_code`
-    verbose:bool=False # Show stdout/stderr during execution
+    verbose:bool=False, # Show stdout/stderr during execution
+    cell_timeout:int=None  # Seconds before each cell times out (None: no limit)
 ):
     "Execute notebook from `src` and save with outputs to `dest"
     nb = read_nb(src)
     self._fname = src
     self.set_path(Path(src).parent.resolve())
     if inject_path is not None: inject_code = Path(inject_path).read_text()
-    await self.run_all(nb, exc_stop=exc_stop, preproc=preproc, postproc=postproc,
-        inject_code=inject_code, inject_idx=inject_idx, verbose=verbose)
+    self.run_all(nb, exc_stop=exc_stop, preproc=preproc, postproc=postproc,
+        inject_code=inject_code, inject_idx=inject_idx, verbose=verbose, cell_timeout=cell_timeout)
     if dest: write_nb(nb, dest)
 
 # %% ../nbs/00_shell.ipynb #694161cb
@@ -368,24 +402,25 @@ from fastcore.nbio import render_text
 # %% ../nbs/00_shell.ipynb #31536fa0
 @patch
 @delegates(CaptureShell.run)
-async def run_text(self:CaptureShell, code, **kwargs):
+def run_text(self:CaptureShell, code, **kwargs):
     "Run `code`, returning its outputs rendered as concise text: what a notebook's output area shows"
-    return render_text(await self.run(code, **kwargs))
+    return render_text(self.run(code, **kwargs))
 
 # %% ../nbs/00_shell.ipynb #1227c8b1
 @call_parse
-async def exec_nb(
+def exec_nb(
     src:str, # Notebook path to read from
     dest:str='', # Notebook path to write to
     exc_stop:bool=False, # Stop on exceptions?
     inject_code:str=None, # Code to inject into a cell
     inject_path:str=None, # Path to file containing code to inject into a cell
     inject_idx:int=0, # Cell to replace with `inject_code`
-    verbose:bool=False # Show stdout/stderr during execution
+    verbose:bool=False, # Show stdout/stderr during execution
+    cell_timeout:int=None  # Seconds before each cell times out (None: no limit)
 ):
     "Execute notebook from `src` and save with outputs to `dest`"
-    await CaptureShell().execute(src, dest, exc_stop=exc_stop, inject_code=inject_code,
-        inject_path=inject_path, inject_idx=inject_idx, verbose=verbose)
+    CaptureShell().execute(src, dest, exc_stop=exc_stop, inject_code=inject_code,
+        inject_path=inject_path, inject_idx=inject_idx, verbose=verbose, cell_timeout=cell_timeout)
 
 # %% ../nbs/00_shell.ipynb #c44963a0
 class SmartCompleter(IPCompleter):
