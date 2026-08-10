@@ -2,6 +2,13 @@
 
 <!-- do not remove -->
 
+## 0.3.1
+
+### New Features
+
+- Run cells on a per-shell background event loop with sync API, replacing SIGALRM timeouts with per-cell timeouts and task reaping ([#96](https://github.com/AnswerDotAI/execnb/issues/96))
+
+
 ## 0.3.0
 
 ### New Features
