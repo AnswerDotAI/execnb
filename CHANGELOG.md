@@ -2,6 +2,13 @@
 
 <!-- do not remove -->
 
+## 0.3.3
+
+### New Features
+
+- Record cell execution timing in metadata.execution using Jupyter `record_timing` keys plus a total elapsed-seconds field ([#97](https://github.com/AnswerDotAI/execnb/issues/97))
+
+
 ## 0.3.2
 
 ### New Features
