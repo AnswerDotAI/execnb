@@ -16,6 +16,8 @@ from fastcore.ansi import strip_ansi
 
 import asyncio,io,multiprocessing,threading,types,traceback,builtins
 from contextlib import contextmanager,suppress
+from datetime import datetime,timezone
+from time import perf_counter
 try:
     if sys.platform == 'darwin': multiprocessing.set_start_method("fork")
 except RuntimeError: pass # if re-running cell
@@ -286,7 +288,10 @@ def cell(self:CaptureShell, cell, stdout=True, stderr=True, verbose=False, timeo
     "Run `cell`, skipping if not code, and store outputs (and the execution count) back in cell"
     if cell.cell_type!='code': return
     self._cell_idx = cell.idx_ + 1
+    st,t0 = datetime.now(timezone.utc),perf_counter()
     outs = self.run(cell.source, stdout=stdout, stderr=stderr, verbose=verbose, timeout=timeout)
+    cell.metadata['execution'] = {'iopub.execute_input': st.isoformat(),
+        'shell.execute_reply': datetime.now(timezone.utc).isoformat(), 'total': perf_counter()-t0}
     cell.outputs = _dict2obj(outs) if outs else []
     cell.execution_count = self.execution_count-1  # the count this run used: the shell has already advanced
 
