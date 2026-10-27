@@ -2,6 +2,13 @@
 
 <!-- do not remove -->
 
+## 0.3.4
+
+### Bugs Squashed
+
+- Update CLI flags for fastcore.script hyphenation ([#98](https://github.com/AnswerDotAI/execnb/pull/98)), thanks to [@jph00](https://github.com/jph00)
+
+
 ## 0.3.3
 
 ### New Features
