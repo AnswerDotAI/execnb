@@ -13,6 +13,7 @@ from fastcore.utils import *
 from fastcore.meta import delegates
 from fastcore.script import call_parse
 from fastcore.ansi import strip_ansi
+from fastcore.aio import enable_async_magics
 
 import asyncio,io,multiprocessing,threading,types,traceback,builtins
 from contextlib import contextmanager,suppress
@@ -80,6 +81,7 @@ class CaptureShell(InteractiveShell):
         cfg = _profile_cfg()[0] if profile else Config()
         if not history: cfg.HistoryManager.hist_file = ':memory:'
         super().__init__(config=cfg)
+        enable_async_magics(self)
         self.input_transformers_cleanup.append(leading_comment_lines)
         self.history_manager.enabled = history
         self.timeout = timeout
